@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  ~ Copyright (c) 2020. Tiktok Inc.
+  ~
+  ~ This source code is licensed under the MIT license found in the LICENSE file in the root directory of this source tree.
+  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~-->
+
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+          package="com.example.iabtest">
+
+    <application
+            android:allowBackup="true"
+            android:icon="@mipmap/ic_launcher"
+            android:label="@string/app_name"
+            android:roundIcon="@mipmap/ic_launcher_round"
+            android:supportsRtl="true"
+            android:theme="@style/AppTheme">
+
+        <!--
+        // Tiktok SDK config start
+        create a new tiktok_config.xml file in this directory to provide to AppId,
+        however "tiktok_business_app_access_token" is optional.
+
+        a sample xml file could be like this
+        <?xml version="1.0" encoding="utf-8"?>
+           <resources>
+             <string name="tiktok_business_app_access_token">Your accessToken</string>
+             <string name="tiktok_business_app_id">Your AppId</string>
+           </resources>
+        -->
+        <meta-data
+            android:name="com.tiktok.sdk.AccessToken"
+            android:value="@string/tiktok_business_app_access_token" />
+        <meta-data
+            android:name="com.tiktok.sdk.AppId"
+            android:value="@string/tiktok_business_app_id" />
+        <!-- Tiktok SDK config end -->
+
+        <activity android:name=".MainActivity">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN"/>
+
+                <category android:name="android.intent.category.LAUNCHER"/>
+            </intent-filter>
+        </activity>
+    </application>
+
+</manifest>

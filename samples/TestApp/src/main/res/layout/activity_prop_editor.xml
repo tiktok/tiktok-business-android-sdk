@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  ~ Copyright (c) 2020. Tiktok Inc.
+  ~
+  ~ This source code is licensed under the MIT license found in the LICENSE file in the root directory of this source tree.
+  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~-->
+
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <RelativeLayout android:id="@+id/propContainer" android:layout_width="match_parent"
+        android:layout_height="match_parent" android:background="@android:color/white">
+
+        <ListView
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:id="@+id/list"
+            android:layout_weight="1"
+            android:layout_margin="5dp"/>
+
+        <ImageButton
+            android:id="@+id/fab_image_button"
+            android:layout_width="@dimen/fab_button_diameter"
+            android:layout_height="@dimen/fab_button_diameter"
+            android:layout_alignParentEnd="true"
+            android:layout_alignParentBottom="true"
+            android:layout_marginBottom="@dimen/fab_button_margin_bottom"
+            android:layout_marginRight="@dimen/fab_button_margin_right"
+            android:background="@drawable/oval_bg"
+            android:src="@drawable/ic_baseline_add_24"
+            android:tint="@android:color/white"
+            android:backgroundTint="@color/colorPrimary"
+            android:elevation="@dimen/elevation_low"
+            android:stateListAnimator="@anim/button_elevation"
+            android:layout_alignParentRight="true" />
+
+    </RelativeLayout>
+
+</LinearLayout>

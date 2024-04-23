@@ -1,0 +1,168 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  ~ Copyright (c) 2021. Tiktok Inc.
+  ~
+  ~ This source code is licensed under the MIT license found in the LICENSE file in the root directory of this source tree.
+  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~-->
+
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+                                                   xmlns:tools="http://schemas.android.com/tools"
+                                                   android:layout_width="match_parent"
+                                                   android:layout_height="match_parent"
+                                                   xmlns:app="http://schemas.android.com/apk/res-auto"
+                                                   tools:context=".ui.identify.IdentifyFragment">
+
+    <LinearLayout
+            android:id="@+id/externalIDLayout"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center"
+            android:orientation="horizontal"
+            android:paddingTop="10dp"
+            tools:ignore="MissingConstraints">
+
+        <TextView
+                android:id="@+id/externalIDLabel"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:labelFor="@+id/externalID"
+                android:text="@string/external_id"
+                android:textColor="@color/colorLabel" />
+
+        <EditText
+                android:id="@+id/externalID"
+                android:layout_width="180dp"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="20dp"
+                android:autofillHints="@string/tt_am_external_id"
+                android:inputType="text"
+                android:singleLine="true" />
+
+    </LinearLayout>
+
+    <LinearLayout
+            android:id="@+id/externalUsernameLayout"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center"
+            android:orientation="horizontal"
+            android:paddingTop="10dp"
+            app:layout_constraintTop_toBottomOf="@+id/externalIDLayout"
+            tools:ignore="MissingConstraints">
+
+        <TextView
+                android:id="@+id/externalUsernameLabel"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:labelFor="@+id/externalUsername"
+                android:text="@string/username"
+                android:textColor="@color/colorLabel" />
+
+        <EditText
+                android:id="@+id/externalUsername"
+                android:layout_width="180dp"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="20dp"
+                android:autofillHints="@string/username"
+                android:inputType="text"
+                android:singleLine="true" />
+
+    </LinearLayout>
+
+    <LinearLayout
+            android:id="@+id/externalPhoneLayout"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center"
+            android:orientation="horizontal"
+            android:paddingTop="10dp"
+            app:layout_constraintTop_toBottomOf="@+id/externalUsernameLayout"
+            tools:ignore="MissingConstraints">
+
+        <TextView
+                android:id="@+id/externalPhoneLabel"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:labelFor="@+id/externalPhone"
+                android:text="@string/phone"
+                android:textColor="@color/colorLabel" />
+
+        <EditText
+                android:id="@+id/externalPhone"
+                android:layout_width="180dp"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="20dp"
+                android:autofillHints="@string/phone"
+                android:inputType="text"
+                android:singleLine="true" tools:ignore="TextFields"/>
+
+    </LinearLayout>
+
+    <LinearLayout
+            android:id="@+id/externalEmailLayout"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center"
+            android:orientation="horizontal"
+            android:paddingTop="10dp"
+            app:layout_constraintTop_toBottomOf="@+id/externalPhoneLayout"
+            tools:ignore="MissingConstraints">
+
+        <TextView
+                android:id="@+id/externalEmailLabel"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:labelFor="@+id/externalEmail"
+                android:text="@string/email"
+                android:textColor="@color/colorLabel" />
+
+        <EditText
+                android:id="@+id/externalEmail"
+                android:layout_width="180dp"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="20dp"
+                android:autofillHints="@string/email"
+                android:inputType="text"
+                android:singleLine="true" tools:ignore="TextFields"/>
+
+    </LinearLayout>
+
+    <RelativeLayout
+            android:id="@+id/footer"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:gravity="bottom"
+            tools:ignore="MissingConstraints">
+
+        <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_alignParentBottom="true"
+                android:layout_marginBottom="10dp"
+                android:gravity="center"
+                android:orientation="horizontal" tools:ignore="MissingConstraints">
+
+            <Button
+                    android:id="@+id/resetBtn"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:padding="5dp"
+                    android:text="@string/reset" />
+
+            <Button
+                    android:id="@+id/identifyBtn"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:padding="5dp"
+                    android:text="@string/identify" />
+
+            <Button
+                    android:id="@+id/logoutBtn"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:padding="5dp"
+                    android:text="@string/logout" />
+        </LinearLayout>
+    </RelativeLayout>
+
+</androidx.constraintlayout.widget.ConstraintLayout>

@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  ~ Copyright (c) 2020. Tiktok Inc.
+  ~
+  ~ This source code is licensed under the MIT license found in the LICENSE file in the root directory of this source tree.
+  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~-->
+
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    tools:showIn="navigation_view">
+
+    <group android:checkableBehavior="single">
+        <item
+            android:id="@+id/nav_events"
+            android:icon="@drawable/ic_baseline_view_list_24"
+            android:title="@string/menu_events" />
+        <item
+                android:id="@+id/nav_identify"
+                android:icon="@drawable/ic_baseline_view_list_24"
+                android:title="@string/menu_identify" />
+        <item
+            android:id="@+id/nav_eventlog"
+            android:icon="@drawable/ic_baseline_view_list_24"
+            android:title="@string/menu_eventlog" />
+        <item
+            android:id="@+id/nav_billing"
+            android:icon="@drawable/ic_baseline_view_list_24"
+            android:title="@string/menu_billing" />
+    </group>
+</menu>

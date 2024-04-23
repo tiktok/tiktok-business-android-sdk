@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  ~ Copyright (c) 2020. Tiktok Inc.
+  ~
+  ~ This source code is licensed under the MIT license found in the LICENSE file in the root directory of this source tree.
+  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~-->
+
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+    <item
+        android:id="@+id/action_settings"
+        android:orderInCategory="100"
+        android:title="@string/action_settings"
+        app:showAsAction="never" />
+    <item
+        android:id="@+id/action_preload"
+        android:orderInCategory="100"
+        android:title="@string/preload_all_events"
+        app:showAsAction="never" />
+    <item
+        android:id="@+id/action_loadtest"
+        android:orderInCategory="100"
+        android:title="@string/load_test"
+        app:showAsAction="never" />
+    <item
+        android:id="@+id/action_clearlog"
+        android:orderInCategory="100"
+        android:title="@string/clear_log"
+        app:showAsAction="never" />
+    <item
+        android:id="@+id/action_crash_sdk"
+        android:orderInCategory="100"
+        android:title="@string/crash_app_from_sdk"
+        app:showAsAction="never" />
+    <item
+        android:id="@+id/action_crash_app"
+        android:orderInCategory="100"
+        android:title="@string/crash_app_from_app"
+        app:showAsAction="never" />
+</menu>

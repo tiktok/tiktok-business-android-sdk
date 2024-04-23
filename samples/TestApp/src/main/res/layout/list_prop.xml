@@ -1,0 +1,43 @@
+<!--~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  ~ Copyright (c) 2020. Tiktok Inc.
+  ~
+  ~ This source code is licensed under the MIT license found in the LICENSE file in the root directory of this source tree.
+  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~-->
+
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="?android:listPreferredItemHeightSmall"
+    android:orientation="horizontal"
+    android:showDividers="middle"
+    android:divider="?android:dividerVertical"
+    android:dividerPadding="8dp"
+    android:gravity="center">
+
+    <TextView android:id="@+id/item_id"
+        android:visibility="invisible"
+        android:layout_height="wrap_content"
+        android:layout_width="wrap_content" />
+
+    <TextView android:id="@+id/item_text_view"
+        style="?android:textAppearanceMedium"
+        android:layout_width="0dp"
+        android:layout_weight="1"
+        android:layout_height="wrap_content"
+        android:padding="10dp"
+        android:paddingLeft="?android:listPreferredItemPaddingLeft" />
+
+    <ImageButton android:id="@+id/edit_button"
+        android:layout_width="48dp"
+        android:layout_height="match_parent"
+        android:src="@drawable/ic_baseline_edit_24"
+        android:background="?android:selectableItemBackground"
+        android:onClick="onEditButtonClick" />
+
+    <ImageButton android:id="@+id/delete_button"
+        android:layout_width="48dp"
+        android:layout_height="match_parent"
+        android:src="@drawable/ic_baseline_delete_outline_24"
+        android:background="?android:selectableItemBackground"
+        android:onClick="onDeleteButtonClick" />
+
+</LinearLayout>

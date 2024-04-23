@@ -1,0 +1,32 @@
+<!--~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  ~ Copyright (c) 2020. Tiktok Inc.
+  ~
+  ~ This source code is licensed under the MIT license found in the LICENSE file in the root directory of this source tree.
+  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~-->
+
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="?android:listPreferredItemHeightSmall"
+    android:orientation="horizontal"
+    android:showDividers="middle"
+    android:divider="?android:dividerVertical"
+    android:dividerPadding="8dp"
+    android:gravity="center">
+
+    <TextView android:id="@+id/log"
+        style="@android:style/TextAppearance.DeviceDefault"
+        android:layout_width="0dp"
+        android:layout_weight="1"
+        android:layout_height="wrap_content"
+        android:padding="10dp"
+        android:paddingLeft="?android:listPreferredItemPaddingLeft"
+        android:paddingStart="?android:listPreferredItemPaddingLeft"
+        tools:ignore="RtlSymmetry" />
+
+    <TextView android:id="@+id/logID"
+        android:visibility="invisible"
+        android:layout_height="wrap_content"
+        android:layout_width="wrap_content" />
+
+</LinearLayout>

@@ -1,0 +1,45 @@
+<!--~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  ~ Copyright (c) 2020. Tiktok Inc.
+  ~
+  ~ This source code is licensed under the MIT license found in the LICENSE file in the root directory of this source tree.
+  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~-->
+
+<resources>
+    <string name="app_name">Tiktok Analytics Sample</string>
+    <string name="track">Track</string>
+    <string name="flush">Flush</string>
+    <string name="reset">Reset</string>
+    <string name="event_name">event_name</string>
+    <string name="select_from_saved_events">select from saved events</string>
+    <string name="add_prop">add prop</string>
+    <string name="title_activity_app">App</string>
+    <string name="navigation_drawer_open">Open navigation drawer</string>
+    <string name="navigation_drawer_close">Close navigation drawer</string>
+    <string name="nav_header_title">Tiktok Business SDK</string>
+    <string name="nav_header_subtitle">Test App</string>
+    <string name="nav_header_desc">Navigation header</string>
+    <string name="action_settings">Settings</string>
+
+    <string name="menu_billing">Google play Billing V4</string>
+    <string name="menu_events">Events</string>
+    <string name="menu_identify">Identify</string>
+    <string name="menu_eventlog">Event Logs</string>
+    <string name="properties">Event Properties</string>
+    <string name="clear_log">Clear Log</string>
+    <string name="load_test">Load Test</string>
+    <string name="preload_all_events">Preload All Events</string>
+
+    <string name="tt_am_init">TT_AM_INIT</string>
+    <string name="tt_am_external_id">TT_AM_EXTERNAL_ID</string>
+    <string name="tt_am_external_username">TT_AM_EXTERNAL_USERNAME</string>
+    <string name="tt_am_external_phone">TT_AM_EXTERNAL_PHONE</string>
+    <string name="tt_am_external_email">TT_AM_EXTERNAL_EMAIL</string>
+    <string name="external_id">External ID</string>
+    <string name="username">Username</string>
+    <string name="phone">Phone</string>
+    <string name="email">Email</string>
+    <string name="identify">Identify</string>
+    <string name="logout">Logout</string>
+    <string name="crash_app_from_sdk">Force Crash from SDK</string>
+    <string name="crash_app_from_app">Force Crash from App</string>
+</resources>

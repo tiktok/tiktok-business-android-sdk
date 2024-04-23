@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  ~ Copyright (c) 2020. Tiktok Inc.
+  ~
+  ~ This source code is licensed under the MIT license found in the LICENSE file in the root directory of this source tree.
+  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~-->
+
+<navigation xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/mobile_navigation"
+    app:startDestination="@+id/nav_events">
+
+    <fragment
+        android:id="@+id/nav_billing"
+        android:name="com.example.ui.home.HomeFragment"
+        android:label="@string/menu_billing"
+        tools:layout="@layout/fragment_home" />
+
+    <fragment
+        android:id="@+id/nav_events"
+        android:name="com.example.ui.events.EventFragment"
+        android:label="@string/menu_events"
+        tools:layout="@layout/fragment_events" />
+
+    <fragment
+        android:id="@+id/nav_eventlog"
+        android:name="com.example.ui.eventlog.EventLogFragment"
+        android:label="@string/menu_eventlog"
+        tools:layout="@layout/fragment_eventlog" />
+
+    <fragment
+            android:id="@+id/nav_identify"
+            android:name="com.example.ui.identify.IdentifyFragment"
+            android:label="@string/menu_identify"
+            tools:layout="@layout/identify_fragment" />
+</navigation>

@@ -1,0 +1,41 @@
+/*******************************************************************************
+ * Copyright (c) 2020. Tiktok Inc.
+ *
+ * This source code is licensed under the MIT license found in the LICENSE file in the root directory of this source tree.
+ ******************************************************************************/
+
+// Top-level build file where you can add configuration options common to all sub-projects/modules.
+buildscript {
+    repositories {
+        mavenCentral()
+        google()
+    }
+    dependencies {
+        classpath 'com.android.tools.build:gradle:4.2.2'
+    }
+}
+
+
+allprojects {
+    apply plugin: 'idea'
+    repositories {
+        mavenCentral()
+        google()
+        maven { url 'https://jitpack.io' }
+    }
+}
+
+ext {
+    versionName = VERSION_NAME
+
+    minSdkVersion = 17
+    targetSdkVersion = 31
+    compileSdkVersion = 31
+
+    sourceCompatibilityVersion = JavaVersion.VERSION_1_8
+    targetCompatibilityVersion = JavaVersion.VERSION_1_8
+}
+
+task clean(type: Delete) {
+    delete rootProject.buildDir
+}
