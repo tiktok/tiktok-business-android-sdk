@@ -15,6 +15,9 @@ public class TTConst {
     public static final String TTSDK_APP_2DR_TIME = "com.tiktok.sdk.2drTime";
 
     public static final String TTSDK_PREFIX = "com.tiktok";
+    public static final int TTSDK_EXCEPTION_NET_ERROR = 1;
+    public static final int TTSDK_EXCEPTION_SDK_CATCH = 2;
+    public static final int TTSDK_EXCEPTION_CRASH = 3;
 
     public static enum ApiErrorCodes {
         PARTIAL_SUCCESS(20001),

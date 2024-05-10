@@ -6,10 +6,13 @@
 
 package com.tiktok.appevents;
 
+import static com.tiktok.TikTokBusinessSdk.enableAutoIapTrack;
+
 import androidx.annotation.NonNull;
 import androidx.lifecycle.LifecycleOwner;
 
 import com.tiktok.TikTokBusinessSdk;
+import com.tiktok.iap.TTInAppPurchaseWrapper;
 import com.tiktok.util.TTLogger;
 import com.tiktok.util.TTUtil;
 import org.json.JSONObject;
@@ -47,6 +50,9 @@ class TTActivityLifecycleCallbacksListener extends TTLifeCycleCallbacksAdapter {
         bgStart = System.currentTimeMillis();
         appEventLogger.stopScheduler();
         isPaused = true;
+        if(enableAutoIapTrack()) {
+            TTInAppPurchaseWrapper.startBillingClient();
+        }
     }
 
     @Override

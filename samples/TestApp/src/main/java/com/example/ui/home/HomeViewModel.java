@@ -19,12 +19,18 @@ import com.tiktok.TikTokBusinessSdk;
 public class HomeViewModel extends AndroidViewModel {
 
     private final MutableLiveData<String> mText;
+    private final MutableLiveData<String> mSubsText;
+    private final MutableLiveData<String> mLogText;
     SharedPreferences sharedPreferences;
 
     public HomeViewModel(Application application) {
         super(application);
         mText = new MutableLiveData<>();
         mText.setValue("Purchase");
+        mSubsText = new MutableLiveData<>();
+        mSubsText.setValue("Subscribe");
+        mLogText = new MutableLiveData<>();
+        mLogText.setValue("init");
         sharedPreferences = getApplication().getSharedPreferences("TT_IDENTIFY", Context.MODE_PRIVATE);
     }
 
@@ -41,6 +47,22 @@ public class HomeViewModel extends AndroidViewModel {
 
     public LiveData<String> getText() {
         return mText;
+    }
+
+    public LiveData<String> getSubscribeText() {
+        return mSubsText;
+    }
+
+    public void setSubscribeText(String txt) {
+        mSubsText.setValue(txt);
+    }
+
+    public LiveData<String> getLogText() {
+        return mLogText;
+    }
+
+    public void setLogText(String txt) {
+        mLogText.setValue(txt);
     }
 
     public void setNewCache(String externalId,

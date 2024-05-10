@@ -6,6 +6,10 @@
 
 package com.tiktok.appevents;
 
+import static com.tiktok.util.TTConst.TTSDK_EXCEPTION_SDK_CATCH;
+
+import android.text.TextUtils;
+
 import com.tiktok.BuildConfig;
 import com.tiktok.TikTokBusinessSdk;
 import com.tiktok.util.HttpRequestUtil;
@@ -71,10 +75,10 @@ class TTRequest {
         //  for fix bug in lower Android API edition. Maybe there is something wrong with language package, url can not be parsed successfully with some special char
         //  paramsMap.put("app_name", SystemInfoUtil.getAppName());
         paramsMap.put("app_version", SystemInfoUtil.getAppVersionName());
-        paramsMap.put("tiktok_app_id", TikTokBusinessSdk.getTTAppId());
+        paramsMap.put("tiktok_app_id", TikTokBusinessSdk.getFirstTTAppIds());
         paramsMap.putAll(options);
 
-        String url = "https://business-api.tiktok.com/open_api/business_sdk_config/get/?" + TTUtil.mapToString(paramsMap, "&");
+        String url = TTUtil.mapToString("https://business-api.tiktok.com/open_api/business_sdk_config/get/", paramsMap);
         logger.debug(url);
         String result = HttpRequestUtil.doGet(url, getHeadParamMap);
         logger.debug(result);
@@ -89,7 +93,7 @@ class TTRequest {
                 logger.info("Global config fetched: " + TTUtil.ppStr(config));
             } catch (Exception e) {
                 // might be api returning something wrong
-                TTCrashHandler.handleCrash(TAG, e);
+                TTCrashHandler.handleCrash(TAG, e, TTSDK_EXCEPTION_SDK_CATCH);
             }
         }
         try {
@@ -162,7 +166,7 @@ class TTRequest {
                 bodyJson.put("batch", new JSONArray(batch));
             } catch (Exception e) {
                 failedEventsToBeSaved.addAll(currentBatch);
-                TTCrashHandler.handleCrash(TAG, e);
+                TTCrashHandler.handleCrash(TAG, e, TTSDK_EXCEPTION_SDK_CATCH);
                 continue;
             }
 
@@ -207,7 +211,7 @@ class TTRequest {
                                 }
                             }
                         } catch (Exception e) {
-                            TTCrashHandler.handleCrash(TAG, e);
+                            TTCrashHandler.handleCrash(TAG, e, TTSDK_EXCEPTION_SDK_CATCH);
                             failedEventsToBeSaved.addAll(currentBatch);
                             failedRequests += currentBatch.size();
                         }
@@ -221,7 +225,7 @@ class TTRequest {
                 } catch (JSONException e) {
                     failedRequests += currentBatch.size();
                     failedEventsToBeSaved.addAll(currentBatch);
-                    TTCrashHandler.handleCrash(TAG, e);
+                    TTCrashHandler.handleCrash(TAG, e, TTSDK_EXCEPTION_SDK_CATCH);
                 }
                 logger.debug(TTUtil.ppStr(result));
             }
@@ -280,6 +284,9 @@ class TTRequest {
             if (event.getEventName() != null) {
                 propertiesJson.put("event", event.getEventName());
             }
+            if (!TextUtils.isEmpty(event.getEventId())) {
+                propertiesJson.put("event_id", event.getEventId());
+            }
             propertiesJson.put("timestamp", TimeUtil.getISO8601Timestamp(event.getTimeStamp()));
             if (TikTokBusinessSdk.isInSdkLDUMode()) {
                 propertiesJson.put("limited_data_use", true);
@@ -291,7 +298,7 @@ class TTRequest {
             propertiesJson.put("context", TTRequestBuilder.getContextForApi(event));
             return propertiesJson;
         } catch (JSONException e) {
-            TTCrashHandler.handleCrash(TAG, e);
+            TTCrashHandler.handleCrash(TAG, e, TTSDK_EXCEPTION_SDK_CATCH);
             return null;
         }
     }

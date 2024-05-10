@@ -6,6 +6,8 @@
 
 package com.tiktok.appevents;
 
+import static com.tiktok.util.TTConst.TTSDK_EXCEPTION_SDK_CATCH;
+
 import android.content.Context;
 import android.os.Build;
 
@@ -16,6 +18,7 @@ import com.tiktok.TikTokBusinessSdk;
 import com.tiktok.util.SystemInfoUtil;
 import com.tiktok.util.TTUtil;
 
+import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -38,14 +41,14 @@ class TTRequestBuilder {
             if (TikTokBusinessSdk.onlyAppIdProvided()) {// to be compatible with the old versions
                 result.put("app_id", TikTokBusinessSdk.getAppId());
             } else {
-                result.put("tiktok_app_id", TikTokBusinessSdk.getTTAppId());
+                result.put("tiktok_app_id", TikTokBusinessSdk.getFirstTTAppIds());
             }
             if (TikTokBusinessSdk.isInSdkDebugMode()) {
-                result.put("test_event_code", TikTokBusinessSdk.getTestEventCode());
+                result.put("test_event_code", String.valueOf(TikTokBusinessSdk.getFirstTTAppIds()));
             }
             result.put("event_source", "APP_EVENTS_SDK");
         } catch (Exception e) {
-            TTCrashHandler.handleCrash(TAG, e);
+            TTCrashHandler.handleCrash(TAG, e, TTSDK_EXCEPTION_SDK_CATCH);
             basePayloadCache = new JSONObject();
             return basePayloadCache;
         }
@@ -56,8 +59,10 @@ class TTRequestBuilder {
     private static JSONObject contextForApiCache = null;
 
     // the context part that does not change
-    private static JSONObject getImmutableContextForApi() throws JSONException {
+    private static JSONObject getImmutableContextForApi(TTAppEvent event) throws JSONException {
         if (contextForApiCache != null) {
+            freshTTAppID(contextForApiCache, event);
+            freshOsVersion(contextForApiCache, event);
             return contextForApiCache;
         }
         TTIdentifierFactory.AdIdInfo adIdInfo = null;
@@ -75,11 +80,49 @@ class TTRequestBuilder {
             TikTokBusinessSdk.getAppEventLogger().monitorMetric("did_end", meta, null);
         } catch (Exception ignored) {}
         contextForApiCache = contextBuilder(adIdInfo);
+        freshTTAppID(contextForApiCache, event);
+        freshOsVersion(contextForApiCache, event);
         return contextForApiCache;
     }
 
+    private static void freshTTAppID(JSONObject contextForApiCache, TTAppEvent event) {
+        try {
+            JSONObject app = contextForApiCache.getJSONObject("app");
+            if (event != null && app != null) {
+                JSONArray tiktokAppIds = new JSONArray();
+                if (event.getTiktokAppIds() != null) {
+                    for (int i = 0; i < event.getTiktokAppIds().size(); i++) {
+                        tiktokAppIds.put(event.getTiktokAppIds().get(i));
+                    }
+                    app.remove("tiktok_app_id");
+                    app.put("tiktok_app_ids", tiktokAppIds);
+                }
+            } else {
+                app.remove("tiktok_app_ids");
+                app.put("tiktok_app_id", TikTokBusinessSdk.getTTAppId());
+            }
+        } catch (Throwable throwable) {
+            throwable.printStackTrace();
+        }
+    }
+
+    private static void freshOsVersion(JSONObject contextForApiCache, TTAppEvent event) {
+        try {
+            JSONObject device = contextForApiCache.getJSONObject("device");
+            if (event != null && device != null) {
+                device.put("os_version", SystemInfoUtil.getAndroidVersion());
+                device.remove("version");
+            } else {
+                device.put("version", SystemInfoUtil.getAndroidVersion());
+                device.remove("os_version");
+            }
+        } catch (Throwable throwable) {
+            throwable.printStackTrace();
+        }
+    }
+
     public static JSONObject getContextForApi(TTAppEvent event) throws JSONException {
-        JSONObject immutablePart = getImmutableContextForApi();
+        JSONObject immutablePart = getImmutableContextForApi(event);
         JSONObject finalObj = new JSONObject(immutablePart.toString());
         finalObj.put("user", event.getUserInfo().toJsonObject());
         return finalObj;
@@ -159,7 +202,6 @@ class TTRequestBuilder {
 
         JSONObject device = new JSONObject();
         device.put("platform", "Android");
-        device.put("version", SystemInfoUtil.getAndroidVersion());
         if (adIdInfo != null) {
             device.put("gaid", adIdInfo.getAdId());
         }
@@ -201,11 +243,11 @@ class TTRequestBuilder {
             return healthBasePayloadCache;
         }
         JSONObject finalObj = new JSONObject();
-        JSONObject app = new JSONObject(getImmutableContextForApi().getJSONObject("app").toString());
+        JSONObject app = new JSONObject(getImmutableContextForApi(null).getJSONObject("app").toString());
         app.put("app_namespace", SystemInfoUtil.getPackageName());
         finalObj.put("app", app);
-        finalObj.put("library", getImmutableContextForApi().get("library"));
-        finalObj.put("device", enrichDeviceBase(getImmutableContextForApi().getJSONObject("device")));
+        finalObj.put("library", getImmutableContextForApi(null).get("library"));
+        finalObj.put("device", enrichDeviceBase(getImmutableContextForApi(null).getJSONObject("device")));
         finalObj.put("log_extra", null);
         healthBasePayloadCache = finalObj;
         return healthBasePayloadCache;

@@ -6,10 +6,25 @@
 
 <resources>
     <string name="app_name">Tiktok Analytics Sample</string>
-    <string name="track">Track</string>
+    <string name="track_tt_event">TrackTTEvent</string>
+    <string name="track_event">TrackEvent</string>
     <string name="flush">Flush</string>
+    <string name="enable_auto_iap_track">enableAutoIapTrack</string>
+    <string name="disabled_auto_iap_track">disabledAutoIapTrack</string>
     <string name="reset">Reset</string>
+    <string name="add_contents">addContents</string>
+    <string name="app_crash">crash</string>
+    <string name="init">init</string>
+    <string name="start_tracker">startTrack</string>
+    <string name="number_of_events">Number of events</string>
+    <string name="send_random_events">send random events</string>
+    <string name="events_prop">events prop json</string>
     <string name="event_name">event_name</string>
+    <string name="app_id_name">app_id_name</string>
+    <string name="tt_app_id_name">tt_app_id_name</string>
+    <string name="tt_level_label">level label</string>
+    <string name="level_label">level label</string>
+    <string name="flush_time">flush time</string>
     <string name="select_from_saved_events">select from saved events</string>
     <string name="add_prop">add prop</string>
     <string name="title_activity_app">App</string>
@@ -21,6 +36,7 @@
     <string name="action_settings">Settings</string>
 
     <string name="menu_billing">Google play Billing V4</string>
+    <string name="menu_init">Init</string>
     <string name="menu_events">Events</string>
     <string name="menu_identify">Identify</string>
     <string name="menu_eventlog">Event Logs</string>

@@ -6,13 +6,20 @@
 
 package com.tiktok;
 
+import static com.tiktok.util.TTConst.TTSDK_EXCEPTION_CRASH;
+
 import android.app.Application;
 import android.content.Context;
+import android.text.TextUtils;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
 import com.tiktok.appevents.*;
+import com.tiktok.appevents.base.EventName;
+import com.tiktok.appevents.base.TTBaseEvent;
+import com.tiktok.iap.TTInAppPurchaseWrapper;
+import com.tiktok.util.RegexUtil;
 import com.tiktok.util.TTConst;
 import com.tiktok.util.TTLogger;
 
@@ -99,14 +106,18 @@ public class TikTokBusinessSdk {
         logger = new TTLogger(TAG, logLevel);
 
         /* no app id exception */
-        if (ttConfig.appId == null) {
-            throw new IllegalArgumentException("app id not set");
+        if (TextUtils.isEmpty(ttConfig.appId) || !RegexUtil.validateAppId(ttConfig.appId)) {
+            ttConfig.appId = "";
+            logger.warn("Invalid App Id!");
         }
 
-        if (ttConfig.ttAppId == null) {
-            logger.warn("ttAppId not set, but its usage is encouraged");
+        if (ttConfig.ttAppId == null || !RegexUtil.validateTTAppId(ttConfig.ttAppId)) {
+            ttConfig.ttAppId = "";
+            ttConfig.ttAppIds = new String[]{""};
+            ttConfig.ttFirstAppId = new BigInteger("0");
+            logger.warn("Invalid TikTok App Id!");
         }
-
+        logger.info("appId: %s, TTAppId: %s, autoIapTrack: %s", ttConfig.appId, ttConfig.ttAppId, ttConfig.autoIapTrack);
         config = ttConfig;
         networkSwitch = new AtomicBoolean(ttConfig.autoStart);
         sdkDebugModeSwitch.set(ttConfig.debugModeSwitch);
@@ -136,7 +147,7 @@ public class TikTokBusinessSdk {
                 @Override
                 public void uncaughtException(@NonNull Thread thread, @NonNull Throwable throwable) {
                     if (TTCrashHandler.isTTSDKRelatedException(throwable)) {
-                        TTCrashHandler.handleCrash(TAG, throwable);
+                        TTCrashHandler.handleCrash(TAG, throwable, TTSDK_EXCEPTION_CRASH);
                     }
                     if (getCrashListener() != null) {
                         getCrashListener().onCrash(thread, throwable);
@@ -155,6 +166,9 @@ public class TikTokBusinessSdk {
         // the appEventLogger instance will be the main interface to track events
         appEventLogger = new TTAppEventLogger(ttConfig.autoEvent,ttConfig.disabledEvents,
                 ttConfig.flushTime, ttConfig.disableMetrics, initTimeMS);
+        if (ttConfig.autoIapTrack) {
+            TTInAppPurchaseWrapper.registerIapTrack();
+        }
 
         try {
             long endTimeMS = System.currentTimeMillis();
@@ -258,10 +272,27 @@ public class TikTokBusinessSdk {
      * A shortcut method for the situations where the events do not require a property body.
      * see more {@link TikTokBusinessSdk#trackEvent(String, JSONObject)}
      */
+    @Deprecated
     public static void trackEvent(String event) {
         appEventLogger.track(event, null);
     }
 
+    @Deprecated
+    public static void trackEvent(String event, String eventId) {
+        appEventLogger.track(event, null, eventId);
+    }
+
+    public static void trackTTEvent(TTBaseEvent event) {
+        appEventLogger.track(event.eventName, event.properties, event.eventId);
+    }
+
+    public static void trackTTEvent(EventName event) {
+        appEventLogger.track(event.toString(), null);
+    }
+
+    public static void trackTTEvent(EventName event, String eventId) {
+        appEventLogger.track(event.toString(), null, eventId);
+    }
 
     /**
      * <pre>
@@ -286,8 +317,13 @@ public class TikTokBusinessSdk {
      *
      * @param event event name
      */
+    @Deprecated
     public static void trackEvent(String event, @Nullable JSONObject props) {
-        appEventLogger.track(event, props);
+        appEventLogger.track(event, props, "");
+    }
+    @Deprecated
+    public static void trackEvent(String event, @Nullable JSONObject props, String eventId) {
+        appEventLogger.track(event, props, eventId);
     }
 
     /**
@@ -363,8 +399,16 @@ public class TikTokBusinessSdk {
     /**
      * returns api_id
      */
-    public static BigInteger getTTAppId() {
+    public static String getTTAppId() {
         return config.ttAppId;
+    }
+
+    public static String[] getTTAppIds() {
+        return config.ttAppIds;
+    }
+
+    public static BigInteger getFirstTTAppIds() {
+        return config.ttFirstAppId;
     }
 
     /**
@@ -416,7 +460,7 @@ public class TikTokBusinessSdk {
 
     public static boolean onlyAppIdProvided() {
         if(config.appId == null){
-            throw new IllegalStateException("AppId should be checked before, this path should not be accessed");
+            logger.warn("AppId should be checked before, this path should not be accessed");
         }
         return config.ttAppId == null;
     }
@@ -504,7 +548,10 @@ public class TikTokBusinessSdk {
                                              @Nullable String phoneNumber,
                                              @Nullable String email) {
         long initTimeMS = System.currentTimeMillis();
-        appEventLogger.identify(externalId, externalUserName, phoneNumber, email);
+        boolean isReset = appEventLogger.identify(externalId, externalUserName, phoneNumber, email);
+        if (!isReset) {
+            return;
+        }
         try {
             long endTimeMS = System.currentTimeMillis();
             JSONObject meta = TTUtil.getMetaWithTS(initTimeMS)
@@ -566,9 +613,11 @@ public class TikTokBusinessSdk {
         /* application context */
         private final Application application;
         /* api_id for api calls, App ID in EM */
-        private String appId;
+        private String appId = "";
         /* tt_app_id for api calls, TikTok App ID from EM */
-        private BigInteger ttAppId;
+        private String ttAppId = "";
+        private String[] ttAppIds = {""};
+        private BigInteger ttFirstAppId=new BigInteger("0");
         /* flush time interval in seconds, default 15, 0 -> disabled */
         private int flushTime = 15;
 //        /* Access-Token for api calls */
@@ -589,6 +638,8 @@ public class TikTokBusinessSdk {
         private boolean debugModeSwitch = false;
         /* open LDU mode*/
         private boolean lduModeSwitch = false;
+
+        private boolean autoIapTrack = false;
 
 
         /**
@@ -614,7 +665,12 @@ public class TikTokBusinessSdk {
          * set app id
          */
         public TTConfig setTTAppId(String ttAppId) {
-            this.ttAppId = new BigInteger(ttAppId);
+            this.ttAppId = ttAppId;
+            try {
+                ttAppIds = (ttAppId.replace(" ", "")).split(",");
+                ttFirstAppId = new BigInteger(ttAppIds[0]);
+            } catch (Throwable throwable) {
+            }
             return this;
         }
 
@@ -622,7 +678,9 @@ public class TikTokBusinessSdk {
          * set app id
          */
         public TTConfig setAppId(String apiId) {
-            this.appId = apiId;
+            if (!TextUtils.isEmpty(apiId)) {
+                this.appId = apiId;
+            }
             return this;
         }
 
@@ -706,6 +764,18 @@ public class TikTokBusinessSdk {
             lduModeSwitch = true;
             return this;
         }
+
+        /**
+         * to open the Auto In App Purchase Track
+         */
+        public  TTConfig enableAutoIapTrack() {
+            autoIapTrack = true;
+            return this;
+        }
+
+        public boolean isAutoIapTrack() {
+            return autoIapTrack;
+        }
     }
 
     /**
@@ -723,6 +793,10 @@ public class TikTokBusinessSdk {
         public boolean log() {
             return this != NONE;
         }
+    }
+
+    public static boolean enableAutoIapTrack() {
+        return config != null && config.isAutoIapTrack();
     }
 
     public interface CrashListener {

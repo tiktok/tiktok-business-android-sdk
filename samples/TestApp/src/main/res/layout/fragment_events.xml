@@ -96,8 +96,57 @@
         android:layout_height="match_parent"
         android:gravity="bottom"
         tools:ignore="MissingConstraints">
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_above="@id/ll"
+            android:gravity="center_horizontal">
+            <EditText
+                android:id="@+id/number_of_events"
+                android:layout_width="150dp"
+                android:layout_height="wrap_content"
+                android:hint="@string/number_of_events"/>
+            <Button
+                android:id="@+id/send_random_event"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:padding="5dp"
+                android:layout_centerHorizontal="true"
+                android:text="@string/send_random_events" />
+        </LinearLayout>
 
         <LinearLayout
+            android:id="@+id/ll"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_above="@id/button"
+            android:gravity="center_horizontal">
+            <Button
+                android:id="@+id/addContents"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:padding="5dp"
+                android:layout_centerHorizontal="true"
+                android:text="@string/add_contents" />
+            <Button
+                android:id="@+id/crash"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:padding="5dp"
+                android:layout_above="@id/button"
+                android:layout_centerHorizontal="true"
+                android:text="@string/app_crash" />
+            <Button
+                android:id="@+id/track_event"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:padding="5dp"
+                android:layout_above="@id/button"
+                android:layout_centerHorizontal="true"
+                android:text="@string/track_event" />
+        </LinearLayout>
+        <LinearLayout
+            android:id="@+id/button"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_alignParentBottom="true"
@@ -117,7 +166,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:padding="5dp"
-                android:text="@string/track" />
+                android:text="@string/track_tt_event" />
 
             <Button
                 android:id="@+id/flush"

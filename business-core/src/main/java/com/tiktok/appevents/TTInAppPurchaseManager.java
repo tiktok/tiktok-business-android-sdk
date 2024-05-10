@@ -6,6 +6,8 @@
 
 package com.tiktok.appevents;
 
+import static com.tiktok.util.TTConst.TTSDK_EXCEPTION_SDK_CATCH;
+
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -26,7 +28,7 @@ class TTInAppPurchaseManager {
             JSONObject skuDetail = purchaseInfo.getSkuDetails();
             return getPurchaseProperties(productId, skuDetail);
         } catch (JSONException e) {
-            TTCrashHandler.handleCrash(TAG, e);
+            TTCrashHandler.handleCrash(TAG, e, TTSDK_EXCEPTION_SDK_CATCH);
             return null;
         }
     }
