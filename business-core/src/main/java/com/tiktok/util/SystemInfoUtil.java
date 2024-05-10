@@ -6,6 +6,8 @@
 
 package com.tiktok.util;
 
+import static com.tiktok.util.TTConst.TTSDK_EXCEPTION_SDK_CATCH;
+
 import android.app.Application;
 import android.content.Context;
 import android.content.pm.PackageInfo;
@@ -112,7 +114,7 @@ public class SystemInfoUtil {
         if (userAgent == null) userAgent = "";
         long endTimeMS = System.currentTimeMillis();
         try {
-            JSONObject meta = TTUtil.getMetaException(ex, endTimeMS)
+            JSONObject meta = TTUtil.getMetaException(ex, endTimeMS, TTSDK_EXCEPTION_SDK_CATCH)
                     .put("latency", endTimeMS-initTimeMS);
             TikTokBusinessSdk.getAppEventLogger().monitorMetric("ua_end", meta, null);
         } catch (Exception ignored) {}

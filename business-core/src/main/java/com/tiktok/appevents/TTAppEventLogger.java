@@ -6,6 +6,10 @@
 
 package com.tiktok.appevents;
 
+import static com.tiktok.util.TTConst.TTSDK_EXCEPTION_SDK_CATCH;
+
+import android.text.TextUtils;
+
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.lifecycle.Lifecycle;
@@ -119,7 +123,7 @@ public class TTAppEventLogger {
             for (TTPurchaseInfo purchaseInfo : purchaseInfos) {
                 JSONObject property = TTInAppPurchaseManager.getPurchaseProps(purchaseInfo);
                 if (property != null) {
-                    track("Purchase", property);
+                    track("Purchase", property, purchaseInfo.getEventId());
                 }
             }
         });
@@ -171,7 +175,7 @@ public class TTAppEventLogger {
         }
     }
 
-    public void identify(String externalId,
+    public boolean identify(String externalId,
                          @Nullable String externalUserName,
                          @Nullable String phoneNumber,
                          @Nullable String email) {
@@ -179,15 +183,16 @@ public class TTAppEventLogger {
         if (sharedInstance.isIdentified()) {
             logger.warn("SDK is already identified, if you want to switch to another" +
                     "user account, plz call TiktokBusinessSDK.logout() first and then identify");
-            return;
+            return false;
         }
         sharedInstance.setIdentified();
         sharedInstance.setExternalId(externalId);
         sharedInstance.setExternalUserName(externalUserName);
         sharedInstance.setPhoneNumber(phoneNumber);
         sharedInstance.setEmail(email);
-        trackEvent(TTAppEvent.TTAppEventType.identify, null, null);
+        trackEvent(TTAppEvent.TTAppEventType.identify, null, null, null);
         flushWithReason(TTAppEventLogger.FlushReason.IDENTIFY);
+        return true;
     }
 
     public void logout() {
@@ -202,11 +207,14 @@ public class TTAppEventLogger {
      * @param props
      */
     public void track(String event, @Nullable JSONObject props) {
-        trackEvent(TTAppEvent.TTAppEventType.track, event, props);
+        trackEvent(TTAppEvent.TTAppEventType.track, event, props, null);
+    }
+    public void track(String event, @Nullable JSONObject props, String eventId) {
+        trackEvent(TTAppEvent.TTAppEventType.track, event, props, eventId);
     }
 
-    private void trackEvent(TTAppEvent.TTAppEventType type, String event, @Nullable JSONObject props) {
-        if (!TikTokBusinessSdk.isSystemActivated()) {
+    private void trackEvent(TTAppEvent.TTAppEventType type, String event, @Nullable JSONObject props, String eventId) {
+        if (!TikTokBusinessSdk.isSystemActivated() || TextUtils.isEmpty(TikTokBusinessSdk.getAppId())) {
             return;
         }
 
@@ -216,7 +224,7 @@ public class TTAppEventLogger {
                 logger.debug("track " + event + " : " + finalProps.toString(4));
             } catch (JSONException ignored) {}
 
-            TTAppEventsQueue.addEvent(new TTAppEvent(type, event, finalProps.toString()));
+            TTAppEventsQueue.addEvent(new TTAppEvent(type, event, finalProps.toString(), eventId, TikTokBusinessSdk.getTTAppIds()));
 
             if (TTAppEventsQueue.size() > THRESHOLD) {
                 flush(FlushReason.THRESHOLD);
@@ -285,7 +293,7 @@ public class TTAppEventLogger {
                 TTAppEventStorage.persist(null);
             }
         } catch (Exception e) {
-            TTCrashHandler.handleCrash(TAG, e);
+            TTCrashHandler.handleCrash(TAG, e, TTSDK_EXCEPTION_SDK_CATCH);
         }
 
         if (flushSize != 0) {
@@ -325,7 +333,7 @@ public class TTAppEventLogger {
         try {
             eventLoop.execute(task);
         } catch (Exception e) {
-            TTCrashHandler.handleCrash(TAG, e);
+            TTCrashHandler.handleCrash(TAG, e, TTSDK_EXCEPTION_SDK_CATCH);
         }
     }
 
@@ -336,7 +344,7 @@ public class TTAppEventLogger {
         try {
             eventLoop.schedule(task, seconds, TimeUnit.SECONDS);
         } catch (Exception e) {
-            TTCrashHandler.handleCrash(TAG, e);
+            TTCrashHandler.handleCrash(TAG, e, TTSDK_EXCEPTION_SDK_CATCH);
         }
     }
 

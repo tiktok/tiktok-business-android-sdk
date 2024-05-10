@@ -6,6 +6,8 @@
 
 package com.example.ui.events;
 
+import static com.example.testdata.TestEvents.TTContentParams;
+
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.app.AppCompatActivity;
@@ -15,6 +17,7 @@ import android.app.AlertDialog;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.os.Bundle;
+import android.text.TextUtils;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -35,9 +38,13 @@ import java.util.Objects;
 public class PropEditActivity extends AppCompatActivity {
 
     private ListView myList;
+    private EditText eventProp;
+    public static final String SOURCE_CONTENT = "content";
+    public static final String SOURCE = "source";
     private ArrayList<Property> props;
     private PropListAdapter adapter;
     private Integer nextPropID = 0;
+    private int resultCode = 2;
 
     @SuppressLint("CutPasteId")
     @Override
@@ -52,14 +59,24 @@ public class PropEditActivity extends AppCompatActivity {
 
         myList = findViewById(R.id.list);
         ImageButton fabImageButton = findViewById(R.id.fab_image_button);
+        eventProp = findViewById(R.id.event_prop);
 
         props = new ArrayList<>();
-        Bundle bundle = getIntent().getExtras();
-        if (bundle != null) {
-            for (String key : bundle.keySet()) {
-                if (bundle.get(key) != null) {
-                    nextPropID++;
-                    props.add(new Property(nextPropID.toString(), key, (String) bundle.get(key)));
+        if(SOURCE_CONTENT.equals(getIntent().getStringExtra(SOURCE))){
+            for (String key : TTContentParams) {
+                nextPropID++;
+                props.add(new Property(nextPropID.toString(), key, ""));
+            }
+            resultCode = 3;
+            fabImageButton.setVisibility(View.GONE);
+        }else {
+            Bundle bundle = getIntent().getExtras();
+            if (bundle != null) {
+                for (String key : bundle.keySet()) {
+                    if (bundle.get(key) != null) {
+                        nextPropID++;
+                        props.add(new Property(nextPropID.toString(), key, (String) bundle.get(key)));
+                    }
                 }
             }
         }
@@ -131,13 +148,35 @@ public class PropEditActivity extends AppCompatActivity {
             Intent intent= new Intent();
             Bundle bundlePros = new Bundle();
             for (Property p : props) {
-                bundlePros.putString(p.key, p.value);
+                if(!TextUtils.isEmpty(p.value)){
+                    convertValue(bundlePros, p.key, p.value);
+                }
+            }
+            if (!TextUtils.isEmpty(eventProp.getText())) {
+                bundlePros.putString("event_prop", String.valueOf(eventProp.getText()));
+                resultCode = 2;
             }
             intent.putExtras(bundlePros);
-            setResult(2, intent);
+            setResult(resultCode, intent);
             finish();
         }
         return super.onOptionsItemSelected(item);
+    }
+
+    private void convertValue(Bundle bundlePros, String key, String value) {
+        switch (key){
+            case "value":
+                bundlePros.putFloat(key, Float.parseFloat(value));
+                break;
+            case "price":
+                bundlePros.putFloat(key, Float.parseFloat(value));
+                break;
+            case "quantity":
+                bundlePros.putInt(key, Integer.parseInt(value));
+                break;
+            default:
+                bundlePros.putString(key, value);
+        }
     }
 
     public void onDeleteButtonClick(View view) {

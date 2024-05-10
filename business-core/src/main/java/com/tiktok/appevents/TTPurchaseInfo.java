@@ -11,6 +11,7 @@ import org.json.JSONObject;
 public class TTPurchaseInfo {
     private final JSONObject purchase;
     private final JSONObject skuDetails;
+    private String eventId;
 
     public static class InvalidTTPurchaseInfoException extends Exception {
 
@@ -39,6 +40,11 @@ public class TTPurchaseInfo {
         }
         this.purchase = purchase;
         this.skuDetails = skuDetails;
+    }
+
+    public TTPurchaseInfo(JSONObject purchase, JSONObject skuDetails, String eventId) throws InvalidTTPurchaseInfoException {
+        this(purchase, skuDetails);
+        this.eventId = eventId;
     }
 
     public JSONObject getPurchase() {
@@ -81,5 +87,9 @@ public class TTPurchaseInfo {
     private boolean isValidSkuDetails(JSONObject skuDetails) {
         return !skuDetails.isNull("price")
                 && !skuDetails.isNull("productId");
+    }
+
+    public String getEventId() {
+        return eventId;
     }
 }

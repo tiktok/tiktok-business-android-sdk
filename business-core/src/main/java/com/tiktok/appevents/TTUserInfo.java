@@ -6,6 +6,8 @@
 
 package com.tiktok.appevents;
 
+import static com.tiktok.util.TTConst.TTSDK_EXCEPTION_SDK_CATCH;
+
 import android.content.Context;
 
 import com.tiktok.util.TTUtil;
@@ -49,7 +51,7 @@ public class TTUserInfo implements Cloneable, Serializable {
             }
             return result.toString();
         } catch (Exception e) {
-            TTCrashHandler.handleCrash(TAG, e);
+            TTCrashHandler.handleCrash(TAG, e, TTSDK_EXCEPTION_SDK_CATCH);
         }
         return null;
     }
@@ -95,7 +97,7 @@ public class TTUserInfo implements Cloneable, Serializable {
                 jsonObject.put("email", email);
             }
         } catch (Exception e) {
-            TTCrashHandler.handleCrash(TAG, e);
+            TTCrashHandler.handleCrash(TAG, e, TTSDK_EXCEPTION_SDK_CATCH);
         }
         return jsonObject;
     }

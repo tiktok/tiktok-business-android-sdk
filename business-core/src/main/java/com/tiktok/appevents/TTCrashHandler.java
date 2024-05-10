@@ -38,10 +38,10 @@ public class TTCrashHandler {
 
     static TTCrashReport crashReport = new TTCrashReport();
 
-    public static void handleCrash(String originTag, Throwable ex) {
+    public static void handleCrash(String originTag, Throwable ex, int type) {
         ttLogger.error(ex, "Error caused by sdk at " + originTag +
                 "\n" + ex.getMessage() + "\n" + getStackTrace(ex));
-        persistException(ex);
+        persistException(ex, type);
     }
 
     public static void retryLater(JSONObject monitor) {
@@ -119,11 +119,11 @@ public class TTCrashHandler {
         }
     }
 
-    private static void persistException(Throwable ex) {
+    private static void persistException(Throwable ex, int type) {
         JSONObject stat = null;
         try {
             stat = TTRequestBuilder.getHealthMonitorBase();
-            JSONObject monitor = TTUtil.getMonitorException(ex, null);
+            JSONObject monitor = TTUtil.getMonitorException(ex, null, type);
             stat.put("monitor", monitor);
             crashReport.addReport(stat.toString(), System.currentTimeMillis(), 0);
             saveToFile(crashReport);
@@ -161,9 +161,7 @@ public class TTCrashHandler {
         Context context = TikTokBusinessSdk.getApplicationContext();
         try {
             FileInputStream fis = context.openFileInput(CRASH_REPORT_FILE);
-            ObjectInputStream is = new ObjectInputStream(fis);
-            meta = (TTCrashReport) is.readObject();
-            is.close();
+            meta = TTSafeReadObjectUtil.safeReadTTCrashHandler(fis);
             fis.close();
         } catch (Exception ignored) {}
         return meta;

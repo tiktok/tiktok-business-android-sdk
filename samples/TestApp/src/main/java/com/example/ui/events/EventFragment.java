@@ -6,13 +6,20 @@
 
 package com.example.ui.events;
 
+import static com.example.testdata.TestEvents.TTBaseEvents;
+import static com.example.ui.events.PropEditActivity.SOURCE;
+import static com.example.ui.events.PropEditActivity.SOURCE_CONTENT;
+import static com.tiktok.appevents.contents.TTContentsEventConstants.Params.EVENT_PROPERTY_CONTENTS;
+
 import android.content.Intent;
 import android.os.Build;
 import android.os.Bundle;
+import android.text.TextUtils;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
+import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -35,6 +42,8 @@ import org.json.JSONObject;
 
 import java.util.Iterator;
 import java.util.Objects;
+import java.util.Random;
+import java.util.Set;
 
 public class EventFragment extends Fragment {
 
@@ -70,6 +79,36 @@ public class EventFragment extends Fragment {
         View root = inflater.inflate(R.layout.fragment_events, container, false);
 
         final TextView propsTV = root.findViewById(R.id.propsPrettyViewer);
+        final Button propertyBtn = root.findViewById(R.id.addContents);
+        final Button crash = root.findViewById(R.id.crash);
+        final Button trackEvent = root.findViewById(R.id.track_event);
+        final EditText editText = root.findViewById(R.id.number_of_events);
+        final Button sendRandomEvents = root.findViewById(R.id.send_random_event);
+        propertyBtn.setVisibility(View.GONE);
+        sendRandomEvents.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                int number = 100;
+                try{
+                    number = Integer.parseInt(String.valueOf(editText.getText()));
+                }catch (Throwable throwable){
+                    throwable.printStackTrace();
+                }
+                Set<String>set = TTBaseEvents.keySet();
+                String[]key = set.toArray(new String[0]);
+                for(int i =0;i<number;i++){
+                    Random rand = new Random();
+                    int index = rand.nextInt(key.length);
+                    TikTokBusinessSdk.trackTTEvent(TTBaseEvents.get(key[index]));
+                }
+            }
+        });
+        crash.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                TikTokBusinessSdk.crashSDK();
+            }
+        });
         eventViewModel.getLiveProperties().observe(getViewLifecycleOwner(), s -> {
             try {
                 assert s != null;
@@ -91,6 +130,9 @@ public class EventFragment extends Fragment {
             Iterator<String> keys = eventViewModel.getPropIterator();
             while (keys.hasNext()) {
                 String key = keys.next();
+                if(EVENT_PROPERTY_CONTENTS.equals(key)){
+                    continue;
+                }
                 try {
                     bundlePros.putString(key, eventViewModel.getProp(key));
                 } catch (JSONException e) {
@@ -98,6 +140,11 @@ public class EventFragment extends Fragment {
                 }
             }
             intent.putExtras(bundlePros);
+            startActivityForResult(intent, 2);
+        });
+        propertyBtn.setOnClickListener(view -> {
+            Intent intent = new Intent(requireContext(), PropEditActivity.class);
+            intent.putExtra(SOURCE, SOURCE_CONTENT);
             startActivityForResult(intent, 2);
         });
 
@@ -109,11 +156,23 @@ public class EventFragment extends Fragment {
             builder.setItems(events, (dialog, selected) -> {
                 eventViewModel.resetProps();
                 eventViewModel.setEvent(events[selected]);
-                for (String property : Objects.requireNonNull(TestEvents.TTEventProperties.get(events[selected]))) {
-                    try {
-                        eventViewModel.addProp(property, "");
-                    } catch (JSONException e) {
-                        e.printStackTrace();
+                if(TTBaseEvents.containsKey(events[selected])){
+                    propsTV.setVisibility(View.GONE);
+                    propertyBtn.setVisibility(View.GONE);
+                } else {
+                    for (String property : Objects.requireNonNull(TestEvents.TTEventProperties.get(events[selected]))) {
+                        try {
+                            eventViewModel.addProp(property, "");
+                        } catch (JSONException e) {
+                            e.printStackTrace();
+                        }
+                    }
+                    if(TestEvents.TTContentsEvent.contains(events[selected])){
+                        propsTV.setVisibility(View.VISIBLE);
+                        propertyBtn.setVisibility(View.VISIBLE);
+                    } else {
+                        propsTV.setVisibility(View.VISIBLE);
+                        propertyBtn.setVisibility(View.GONE);
                     }
                 }
             });
@@ -128,11 +187,22 @@ public class EventFragment extends Fragment {
                 eventLogViewModel.save(new EventLog(
                         eventName,
                         Objects.requireNonNull(eventViewModel.getLiveProperties().getValue()).toString()
-                ));
+                ), false);
                 Toast.makeText(requireContext(), eventName + " event tracked, plz check log", Toast.LENGTH_SHORT).show();
             }
         });
 
+        trackEvent.setOnClickListener(view -> {
+            String eventName = eventTV.getText().toString();
+            eventViewModel.setEvent(eventName);
+            if (!eventName.equals("")) {
+                eventLogViewModel.save(new EventLog(
+                        eventName,
+                        Objects.requireNonNull(eventViewModel.getLiveProperties().getValue()).toString()
+                ), true);
+                Toast.makeText(requireContext(), eventName + " event tracked, plz check log", Toast.LENGTH_SHORT).show();
+            }
+        });
         Button flushBtn = root.findViewById(R.id.flush);
         flushBtn.setOnClickListener(v -> {
             TikTokBusinessSdk.flush();
@@ -144,20 +214,44 @@ public class EventFragment extends Fragment {
     @Override
     public void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
+        if(data == null || data.getExtras() == null){
+            return;
+        }
+        Bundle bundle = data.getExtras();
         if (resultCode == 2) {
-            assert data != null;
-            Bundle bundle = data.getExtras();
-            eventViewModel.resetProps();
-            if (bundle != null) {
-                for (String key : bundle.keySet()) {
-                    if (bundle.get(key) != null) {
-                        try {
-                            eventViewModel.addProp(key, bundle.get(key));
-                        } catch (JSONException e) {
-                            e.printStackTrace();
+            try {
+                if (!TextUtils.isEmpty(bundle.getString("event_prop"))) {
+                    eventViewModel.setProps(new JSONObject(bundle.getString("event_prop")));
+                } else {
+                    eventViewModel.resetProps();
+                    for (String key : bundle.keySet()) {
+                        if (bundle.get(key) != null) {
+                            try {
+                                eventViewModel.addProp(key, bundle.get(key));
+                            } catch (JSONException e) {
+                                e.printStackTrace();
+                            }
                         }
                     }
                 }
+            }catch (Throwable throwable){
+                throwable.printStackTrace();
+            }
+        } else if (resultCode == 3) {
+            JSONObject jsonObject = new JSONObject();
+            for (String key : bundle.keySet()) {
+                if (bundle.get(key) != null) {
+                    try {
+                        jsonObject.put(key, bundle.get(key));
+                    } catch (JSONException e) {
+                        e.printStackTrace();
+                    }
+                }
+            }
+            try {
+                eventViewModel.addContents(jsonObject);
+            } catch (JSONException e) {
+                throw new RuntimeException(e);
             }
         }
     }

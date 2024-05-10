@@ -27,7 +27,7 @@ public class EventLogViewModel extends AndroidViewModel {
 
     public LiveData<List<EventLog>> getAllEventLogs() { return eventLogRepo.getAllEventLogs(); }
 
-    public void save(EventLog eventLog) {
-        eventLogRepo.save(eventLog);
+    public void save(EventLog eventLog, boolean oldApi) {
+        eventLogRepo.save(eventLog, oldApi);
     }
 }

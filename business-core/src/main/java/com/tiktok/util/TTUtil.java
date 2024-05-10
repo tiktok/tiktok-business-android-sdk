@@ -7,6 +7,7 @@
 package com.tiktok.util;
 
 import android.content.Context;
+import android.net.Uri;
 import android.os.Looper;
 
 import androidx.annotation.NonNull;
@@ -22,6 +23,7 @@ import java.util.Map;
 import java.util.UUID;
 
 import static com.tiktok.util.TTConst.TTSDK_APP_ANONYMOUS_ID;
+import static com.tiktok.util.TTConst.TTSDK_EXCEPTION_SDK_CATCH;
 
 public class TTUtil {
     private static final String TAG = TTUtil.class.getName();
@@ -35,7 +37,7 @@ public class TTUtil {
      */
     public static void checkThread(String tag) {
         if (Looper.getMainLooper() == Looper.myLooper()) {
-            TTCrashHandler.handleCrash(tag, new IllegalStateException("Current method should be called in a non-main thread"));
+            TTCrashHandler.handleCrash(tag, new IllegalStateException("Current method should be called in a non-main thread"), TTSDK_EXCEPTION_SDK_CATCH);
         }
     }
 
@@ -76,31 +78,15 @@ public class TTUtil {
         return anoId;
     }
 
-    public static String escapeHTML(String s) {
-        StringBuilder out = new StringBuilder(Math.max(16, s.length()));
-        for (int i = 0; i < s.length(); i++) {
-            char c = s.charAt(i);
-            if (c == '"' || c == '\'' || c == '<' || c == '>' || c == '&') {
-                out.append("&#");
-                out.append((int) c);
-                out.append(';');
-            } else {
-                out.append(c);
-            }
-        }
-        return out.toString();
-    }
-
-    public static String mapToString(Map<String, Object> map, String separator) {
+    public static String mapToString(String url, Map<String, Object> map) {
         if (map.isEmpty()) {
-            return "";
+            return url;
         }
-        StringBuffer buf = new StringBuffer();
+        Uri.Builder build = Uri.parse(url).buildUpon();
         for (Map.Entry<String, Object> entry : map.entrySet()) {
-            buf.append(entry.getKey() + "=" + escapeHTML(entry.getValue().toString()) + "&");
+            build.appendQueryParameter(entry.getKey(), entry.getValue().toString());
         }
-        String finalStr = buf.toString();
-        return finalStr.substring(0, finalStr.length() - 1);
+        return build.toString();
     }
 
     public static JSONObject getMetaWithTS(@Nullable Long ts) {
@@ -113,18 +99,18 @@ public class TTUtil {
         return new JSONObject();
     }
 
-    public static JSONObject getMonitorException(@Nullable Throwable ex, @Nullable Long ts) {
+    public static JSONObject getMonitorException(@Nullable Throwable ex, @Nullable Long ts, int type) {
         JSONObject monitor = new JSONObject();
         try {
             monitor.put("type", "exception");
             monitor.put("name", "exception");
-            monitor.put("meta", getMetaException(ex, ts));
+            monitor.put("meta", getMetaException(ex, ts, type));
             monitor.put("extra", null);
         } catch (Exception ignored) {}
         return monitor;
     }
 
-    public static JSONObject getMetaException(@Nullable Throwable ex, @Nullable Long ts) {
+    public static JSONObject getMetaException(@Nullable Throwable ex, @Nullable Long ts, int type) {
         JSONObject meta = getMetaWithTS(ts);
         try {
             if (ex != null) {
@@ -137,6 +123,7 @@ public class TTUtil {
                         " " + rootCause.getStackTrace()[0].getLineNumber();
                 meta.put("ex_args", argMsg);
                 meta.put("ex_msg", rootCause.getMessage());
+                meta.put("ex_type", type);
                 final int stackLimit = 15;
                 String[] st = new String[stackLimit];
                 for(int i = 0; i < stackLimit; i++) {

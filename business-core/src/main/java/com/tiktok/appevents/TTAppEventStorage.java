@@ -6,6 +6,8 @@
 
 package com.tiktok.appevents;
 
+import static com.tiktok.util.TTConst.TTSDK_EXCEPTION_SDK_CATCH;
+
 import android.content.Context;
 
 import com.tiktok.TikTokBusinessSdk;
@@ -13,10 +15,9 @@ import com.tiktok.util.TTLogger;
 import com.tiktok.util.TTUtil;
 import org.json.JSONObject;
 
-import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
 import java.io.File;
-import java.io.ObjectInputStream;
+import java.io.FileInputStream;
 import java.io.ObjectOutputStream;
 import java.util.ArrayList;
 import java.util.List;
@@ -62,7 +63,7 @@ class TTAppEventStorage {
         toBeSaved.addEvents(eventsFromDisk.getAppEvents());
         toBeSaved.addEvents(eventsFromMemory);
 
-        //If end up persisting more than 10,000 events, persist the latest 10,000 events by timestamp
+        //If end up persisting more than 500 events, persist the latest 500 events by timestamp
         discardOldEvents(toBeSaved, MAX_PERSIST_EVENTS_NUM);
         saveToDisk(toBeSaved);
     }
@@ -111,7 +112,7 @@ class TTAppEventStorage {
             }
             success = true;
         } catch (Exception e) {
-            TTCrashHandler.handleCrash(TAG, e);
+            TTCrashHandler.handleCrash(TAG, e, TTSDK_EXCEPTION_SDK_CATCH);
         }
         try {
             long endTimeMS = System.currentTimeMillis();
@@ -142,9 +143,8 @@ class TTAppEventStorage {
 
         TTAppEventPersist appEventPersist = new TTAppEventPersist();
 
-        try (ObjectInputStream ois = new ObjectInputStream(
-                new BufferedInputStream(context.openFileInput(EVENT_STORAGE_FILE)))) {
-            appEventPersist = (TTAppEventPersist) ois.readObject();
+        try (FileInputStream ois = context.openFileInput(EVENT_STORAGE_FILE)) {
+            appEventPersist = TTSafeReadObjectUtil.safeReadTTAppEventPersist(ois);
             logger.debug("disk read data: %s", appEventPersist);
             deleteFile(f);
             if (TikTokBusinessSdk.diskListener != null) {
@@ -152,7 +152,7 @@ class TTAppEventStorage {
             }
         } catch (Exception e) {
             deleteFile(f);
-            TTCrashHandler.handleCrash(TAG, e);
+            TTCrashHandler.handleCrash(TAG, e, TTSDK_EXCEPTION_SDK_CATCH);
         }
 
         try {

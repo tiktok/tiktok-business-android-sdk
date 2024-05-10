@@ -10,7 +10,9 @@ import com.tiktok.TikTokBusinessSdk;
 import com.tiktok.util.TTLogger;
 
 import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 import java.util.concurrent.atomic.AtomicLong;
 
 public class TTAppEvent implements Serializable {
@@ -20,29 +22,36 @@ public class TTAppEvent implements Serializable {
         identify
     }
 
-    private static final long serialVersionUID = 1L;
-
+    private static final long serialVersionUID = 2L;
+    private List<String> tiktokAppIds = new ArrayList<>();
     private TTAppEventType type;
     private String eventName;
     private Date timeStamp;
     private String propertiesJson;
+    private String eventId;
     private static AtomicLong counter = new AtomicLong(new Date().getTime() + 0L);
     private Long uniqueId;
     private TTUserInfo userInfo;
     private static String TAG = TTAppEventsQueue.class.getCanonicalName();
     private static TTLogger logger = new TTLogger(TAG, TikTokBusinessSdk.getLogLevel());
 
-    TTAppEvent(TTAppEventType type, String eventName, String propertiesJson) {
-        this(type, eventName, new Date(), propertiesJson);
+    TTAppEvent(TTAppEventType type, String eventName, String propertiesJson, String eventId, String[] ttAppId) {
+        this(type, eventName, new Date(), propertiesJson, eventId, ttAppId);
     }
 
-    TTAppEvent(TTAppEventType type, String eventName, Date timeStamp, String propertiesJson) {
+    TTAppEvent(TTAppEventType type, String eventName, Date timeStamp, String propertiesJson, String eventId, String[] ttAppId) {
         this.type = type;
         this.eventName = eventName;
         this.timeStamp = timeStamp;
         this.propertiesJson = propertiesJson;
+        this.eventId = eventId;
         this.uniqueId = TTAppEvent.counter.getAndIncrement();
         this.userInfo = TTUserInfo.sharedInstance.clone();
+        if (ttAppId != null && ttAppId.length > 0) {
+            for (int i = 0; i < ttAppId.length; i++) {
+                tiktokAppIds.add(ttAppId[i]);
+            }
+        }
     }
 
     public TTUserInfo getUserInfo() {
@@ -69,6 +78,14 @@ public class TTAppEvent implements Serializable {
         this.timeStamp = timeStamp;
     }
 
+    public String getEventId() {
+        return eventId;
+    }
+
+    public void setEventId(String eventId) {
+        this.eventId = eventId;
+    }
+
     public String getPropertiesJson() {
         return propertiesJson;
     }
@@ -81,13 +98,23 @@ public class TTAppEvent implements Serializable {
         return this.uniqueId;
     }
 
+    public List<String> getTiktokAppIds() {
+        return tiktokAppIds;
+    }
+
+    public void setTiktokAppIds(List<String> tiktokAppIds) {
+        this.tiktokAppIds = tiktokAppIds;
+    }
+
     @Override
     public String toString() {
         return "TTAppEvent{" +
                 "eventName='" + eventName + '\'' +
                 ", timeStamp=" + timeStamp +
                 ", propertiesJson='" + propertiesJson + '\'' +
+                ", eventId='" + eventId + '\'' +
                 ", uniqueId=" + uniqueId +
+                ", tiktokAppIds=" + tiktokAppIds +
                 '}';
     }
 }

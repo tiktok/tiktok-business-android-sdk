@@ -9,7 +9,7 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/mobile_navigation"
-    app:startDestination="@+id/nav_events">
+    app:startDestination="@+id/nav_init">
 
     <fragment
         android:id="@+id/nav_billing"
@@ -34,4 +34,10 @@
             android:name="com.example.ui.identify.IdentifyFragment"
             android:label="@string/menu_identify"
             tools:layout="@layout/identify_fragment" />
+
+    <fragment
+        android:id="@+id/nav_init"
+        android:name="com.example.ui.init.InitFragment"
+        android:label="@string/menu_init"
+        tools:layout="@layout/fragment_init" />
 </navigation>

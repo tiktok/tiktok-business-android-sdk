@@ -10,15 +10,10 @@ android {
     compileSdkVersion 30
     buildToolsVersion "30.0.2"
 
-    compileOptions {
-        sourceCompatibility JavaVersion.VERSION_1_8
-        targetCompatibility JavaVersion.VERSION_1_8
-    }
-
     defaultConfig {
         applicationId "com.example.internalmonitor"
         minSdkVersion 17
-        targetSdkVersion 30
+        targetSdkVersion 33
         versionCode 3
         versionName "3.0"
 

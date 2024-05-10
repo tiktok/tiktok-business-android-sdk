@@ -33,11 +33,6 @@ android {
         buildConfig = true
     }
 
-    compileOptions {
-        sourceCompatibility rootProject.ext.sourceCompatibilityVersion
-        targetCompatibility rootProject.ext.targetCompatibilityVersion
-    }
-
     lintOptions {
         textReport true
         textOutput 'stdout'
@@ -52,6 +47,7 @@ dependencies {
     implementation 'androidx.lifecycle:lifecycle-process:2.3.1'
     implementation 'androidx.lifecycle:lifecycle-common-java8:2.3.1'
     implementation 'commons-codec:commons-codec:1.11'
+    compileOnly('com.android.billingclient:billing:6.0.0')
 
     testImplementation 'junit:junit:4.13.2'
 

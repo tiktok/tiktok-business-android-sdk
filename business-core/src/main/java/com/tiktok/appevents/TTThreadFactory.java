@@ -6,6 +6,8 @@
 
 package com.tiktok.appevents;
 
+import static com.tiktok.util.TTConst.TTSDK_EXCEPTION_CRASH;
+
 import androidx.annotation.NonNull;
 import com.tiktok.TikTokBusinessSdk;
 
@@ -20,7 +22,7 @@ public class TTThreadFactory implements ThreadFactory {
         t.setUncaughtExceptionHandler(new Thread.UncaughtExceptionHandler() {
             @Override
             public void uncaughtException(@NonNull Thread thread, @NonNull Throwable throwable) {
-                TTCrashHandler.handleCrash(TAG, throwable);
+                TTCrashHandler.handleCrash(TAG, throwable, TTSDK_EXCEPTION_CRASH);
                 if (TikTokBusinessSdk.getCrashListener() != null) {
                     TikTokBusinessSdk.getCrashListener().onCrash(thread, throwable);
                 }
