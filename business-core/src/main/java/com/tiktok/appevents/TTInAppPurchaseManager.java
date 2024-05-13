@@ -49,6 +49,7 @@ class TTInAppPurchaseManager {
             try {
                 // trying to remove the currency symbol from price
                 if (!currencyCode.equals("") && !price.equals("")) {
+                    price = price.replace(",", "");
                     Pattern regex = Pattern.compile("(\\d+(?:\\.\\d+)?)");
                     Matcher matcher = regex.matcher(price);
                     if (matcher.find()) {
