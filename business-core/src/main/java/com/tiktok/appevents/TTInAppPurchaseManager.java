@@ -12,8 +12,7 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
+import java.math.BigDecimal;
 
 class TTInAppPurchaseManager {
     static final String TAG = TTInAppPurchaseManager.class.getName();
@@ -44,19 +43,9 @@ class TTInAppPurchaseManager {
             String currencyCode = safeJsonGetString(skuDetails, "price_currency_code");
             props.put("currency", currencyCode);
             content.put("quantity", 1);
-            String price = safeJsonGetString(skuDetails, "price");
             double dPrice = 0;
             try {
-                // trying to remove the currency symbol from price
-                if (!currencyCode.equals("") && !price.equals("")) {
-                    price = price.replace(",", "");
-                    Pattern regex = Pattern.compile("(\\d+(?:\\.\\d+)?)");
-                    Matcher matcher = regex.matcher(price);
-                    if (matcher.find()) {
-                        price = matcher.group(1);
-                        dPrice = Double.parseDouble(price);
-                    }
-                }
+                dPrice = new BigDecimal(skuDetails.optLong("price_amount_micros", 0) / 1000000.0).doubleValue();
             } catch (Exception ignored) {
             }
             content.put("price", dPrice);
