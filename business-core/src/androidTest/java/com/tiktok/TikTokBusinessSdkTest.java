@@ -18,8 +18,6 @@ import androidx.annotation.NonNull;
 import androidx.test.platform.app.InstrumentationRegistry;
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 
-import com.tiktok.appevents.TTPurchaseItem;
-
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.junit.Test;
@@ -305,12 +303,7 @@ public class TikTokBusinessSdkTest {
 
         // common purchase event
         // Order with 2 items in cart
-        TTPurchaseItem item1 =new TTPurchaseItem
-                (10.5f, 2, "tshirt", "tshirt_sku_1");
-        TTPurchaseItem item2 = new TTPurchaseItem
-                (12.5f, 1, "tshirt", "tshirt_sku_2");
-        TikTokBusinessSdk.trackEvent("Purchase",
-                TTPurchaseItem.buildPurchaseProperties("USD", item1, item2));
+        TikTokBusinessSdk.trackEvent("Purchase");
 
         // start delay track & force flush
         TikTokBusinessSdk.startTrack();
@@ -371,14 +364,7 @@ public class TikTokBusinessSdkTest {
                 .put("jsonObject", new JSONObject().put("nestedJSONObject", 1));
         TikTokBusinessSdk.trackEvent("AchieveLevel", props);
 
-        // common purchase event
-        // Order with 2 items in cart
-        TTPurchaseItem item1 =new TTPurchaseItem
-                (10.5f, 2, "tshirt", "tshirt_sku_1");
-        TTPurchaseItem item2 = new TTPurchaseItem
-                (12.5f, 1, "tshirt", "tshirt_sku_2");
-        TikTokBusinessSdk.trackEvent("Purchase",
-                TTPurchaseItem.buildPurchaseProperties("USD", item1, item2));
+        TikTokBusinessSdk.trackEvent("Purchase");
 
         // start delay track & force flush
         // this will only trigger LaunchAPP event
@@ -491,14 +477,7 @@ public class TikTokBusinessSdkTest {
         // 2 total success
         assertEquals(2, messageHandler.totalSuccessfulRequests);
 
-        // common purchase event
-        // Order with 2 items in cart
-        TTPurchaseItem item1 =new TTPurchaseItem
-                (10.5f, 2, "tshirt", "tshirt_sku_1");
-        TTPurchaseItem item2 = new TTPurchaseItem
-                (12.5f, 1, "tshirt", "tshirt_sku_2");
-        TikTokBusinessSdk.trackEvent("Purchase",
-                TTPurchaseItem.buildPurchaseProperties("USD", item1, item2));
+        TikTokBusinessSdk.trackEvent("Purchase");
 
         sleep(5);
 

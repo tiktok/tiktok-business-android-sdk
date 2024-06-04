@@ -23,12 +23,13 @@ public interface TTContentsEventConstants {
         String EVENT_PROPERTY_CURRENCY = "currency";
         String EVENT_PROPERTY_VALUE = "value";
         String EVENT_PROPERTY_CONTENTS = "contents";
+        String EVENT_PROPERTY_ORDER_ID = "order_id";
     }
 
     enum Currency {
         AED, ARS, AUD, BDT, BHD, BIF, BOB, BRL, CAD, CHF, CLP, CNY, COP, CRC, CZK, DKK, DZD, EGP,
         EUR, GBP, GTQ, HKD, HNL, HUF, IDR, ILS, INR, ISK, JPY, KES, KHR, KRW, KWD, KZT, MAD, MOP,
         MXN, MYR, NGN, NIO, NOK, NZD, OMR, PEN, PHP, PKR, PLN, PYG, QAR, RON, RUB, SAR, SEK, SGD,
-        THB, TRY, TWD, UAH, USD, VES, VND, ZAR, BGN, IQD,JOD, LBP, TZS
+        THB, TRY, TWD, UAH, USD, VES, VND, ZAR, BGN, IQD, JOD, LBP, TZS
     }
 }

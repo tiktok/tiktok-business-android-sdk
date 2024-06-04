@@ -120,8 +120,10 @@ public class TTInAppPurchaseWrapper {
                         List<TTPurchaseInfo> purchaseInfos = new ArrayList<>();
                         try {
                             for (SkuDetails skuDetails : skuDetailsList) {
-                                purchaseInfos.add(new TTPurchaseInfo(new JSONObject(purchase.getOriginalJson()),
-                                        new JSONObject(skuDetails.getOriginalJson())));
+                                TTPurchaseInfo purchaseInfo = new TTPurchaseInfo(new JSONObject(purchase.getOriginalJson()),
+                                        new JSONObject(skuDetails.getOriginalJson()));
+                                purchaseInfo.setAutoTrack(true);
+                                purchaseInfos.add(purchaseInfo);
                             }
                             TikTokBusinessSdk.trackGooglePlayPurchase(purchaseInfos);
                         } catch (Throwable e) {
