@@ -61,7 +61,6 @@ class TTRequestBuilder {
     // the context part that does not change
     private static JSONObject getImmutableContextForApi(TTAppEvent event) throws JSONException {
         if (contextForApiCache != null) {
-            freshTTAppID(contextForApiCache, event);
             freshOsVersion(contextForApiCache, event);
             return contextForApiCache;
         }
@@ -80,30 +79,8 @@ class TTRequestBuilder {
             TikTokBusinessSdk.getAppEventLogger().monitorMetric("did_end", meta, null);
         } catch (Exception ignored) {}
         contextForApiCache = contextBuilder(adIdInfo);
-        freshTTAppID(contextForApiCache, event);
         freshOsVersion(contextForApiCache, event);
         return contextForApiCache;
-    }
-
-    private static void freshTTAppID(JSONObject contextForApiCache, TTAppEvent event) {
-        try {
-            JSONObject app = contextForApiCache.getJSONObject("app");
-            if (event != null && app != null) {
-                JSONArray tiktokAppIds = new JSONArray();
-                if (event.getTiktokAppIds() != null) {
-                    for (int i = 0; i < event.getTiktokAppIds().size(); i++) {
-                        tiktokAppIds.put(event.getTiktokAppIds().get(i));
-                    }
-                    app.remove("tiktok_app_id");
-                    app.put("tiktok_app_ids", tiktokAppIds);
-                }
-            } else {
-                app.remove("tiktok_app_ids");
-                app.put("tiktok_app_id", TikTokBusinessSdk.getTTAppId());
-            }
-        } catch (Throwable throwable) {
-            throwable.printStackTrace();
-        }
     }
 
     private static void freshOsVersion(JSONObject contextForApiCache, TTAppEvent event) {
@@ -211,6 +188,7 @@ class TTRequestBuilder {
         library.put("version", SystemInfoUtil.getSDKVersion());
 
         JSONObject context = new JSONObject();
+        app.put("tiktok_app_id", TikTokBusinessSdk.getTTAppId());
         context.put("app", app);
         context.put("library", library);
         context.put("device", device);

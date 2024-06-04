@@ -30,5 +30,10 @@
             android:id="@+id/nav_billing"
             android:icon="@drawable/ic_baseline_view_list_24"
             android:title="@string/menu_billing" />
+
+        <item
+            android:id="@+id/nav_deeplink"
+            android:icon="@drawable/ic_baseline_view_list_24"
+            android:title="@string/open_deeplink" />
     </group>
 </menu>

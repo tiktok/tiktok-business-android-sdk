@@ -40,4 +40,10 @@
         android:name="com.example.ui.init.InitFragment"
         android:label="@string/menu_init"
         tools:layout="@layout/fragment_init" />
+
+    <fragment
+        android:id="@+id/nav_deeplink"
+        android:name="com.example.ui.deeplink.DeepLinkFragment"
+        android:label="@string/open_deeplink"
+        tools:layout="@layout/fragment_home" />
 </navigation>

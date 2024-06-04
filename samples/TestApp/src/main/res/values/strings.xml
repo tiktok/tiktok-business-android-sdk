@@ -22,6 +22,8 @@
     <string name="event_name">event_name</string>
     <string name="app_id_name">app_id_name</string>
     <string name="tt_app_id_name">tt_app_id_name</string>
+    <string name="open_deeplink">Open Deeplink</string>
+    <string name="tt_deeplink_name">deeplink:</string>
     <string name="tt_level_label">level label</string>
     <string name="level_label">level label</string>
     <string name="flush_time">flush time</string>

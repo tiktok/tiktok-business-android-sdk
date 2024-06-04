@@ -19,6 +19,9 @@ public class TTConst {
     public static final int TTSDK_EXCEPTION_SDK_CATCH = 2;
     public static final int TTSDK_EXCEPTION_CRASH = 3;
 
+    public static final String TRACK_TYPE = "type";
+    public static final String TRACK_TYPE_AUTO = "auto";
+
     public static enum ApiErrorCodes {
         PARTIAL_SUCCESS(20001),
         API_ERROR(40000);
