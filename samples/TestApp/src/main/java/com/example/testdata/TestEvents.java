@@ -37,6 +37,7 @@ import static com.tiktok.appevents.contents.TTContentsEventConstants.Currency.AE
 import static com.tiktok.appevents.contents.TTContentsEventConstants.Currency.ARS;
 import static com.tiktok.appevents.contents.TTContentsEventConstants.Currency.AUD;
 import static com.tiktok.appevents.contents.TTContentsEventConstants.Currency.BDT;
+import static com.tiktok.appevents.contents.TTContentsEventConstants.Currency.BGN;
 import static com.tiktok.appevents.contents.TTContentsEventConstants.Currency.BHD;
 import static com.tiktok.appevents.contents.TTContentsEventConstants.Currency.BIF;
 import static com.tiktok.appevents.contents.TTContentsEventConstants.Currency.BOB;
@@ -60,13 +61,16 @@ import static com.tiktok.appevents.contents.TTContentsEventConstants.Currency.HU
 import static com.tiktok.appevents.contents.TTContentsEventConstants.Currency.IDR;
 import static com.tiktok.appevents.contents.TTContentsEventConstants.Currency.ILS;
 import static com.tiktok.appevents.contents.TTContentsEventConstants.Currency.INR;
+import static com.tiktok.appevents.contents.TTContentsEventConstants.Currency.IQD;
 import static com.tiktok.appevents.contents.TTContentsEventConstants.Currency.ISK;
+import static com.tiktok.appevents.contents.TTContentsEventConstants.Currency.JOD;
 import static com.tiktok.appevents.contents.TTContentsEventConstants.Currency.JPY;
 import static com.tiktok.appevents.contents.TTContentsEventConstants.Currency.KES;
 import static com.tiktok.appevents.contents.TTContentsEventConstants.Currency.KHR;
 import static com.tiktok.appevents.contents.TTContentsEventConstants.Currency.KRW;
 import static com.tiktok.appevents.contents.TTContentsEventConstants.Currency.KWD;
 import static com.tiktok.appevents.contents.TTContentsEventConstants.Currency.KZT;
+import static com.tiktok.appevents.contents.TTContentsEventConstants.Currency.LBP;
 import static com.tiktok.appevents.contents.TTContentsEventConstants.Currency.MAD;
 import static com.tiktok.appevents.contents.TTContentsEventConstants.Currency.MOP;
 import static com.tiktok.appevents.contents.TTContentsEventConstants.Currency.MXN;
@@ -90,6 +94,7 @@ import static com.tiktok.appevents.contents.TTContentsEventConstants.Currency.SG
 import static com.tiktok.appevents.contents.TTContentsEventConstants.Currency.THB;
 import static com.tiktok.appevents.contents.TTContentsEventConstants.Currency.TRY;
 import static com.tiktok.appevents.contents.TTContentsEventConstants.Currency.TWD;
+import static com.tiktok.appevents.contents.TTContentsEventConstants.Currency.TZS;
 import static com.tiktok.appevents.contents.TTContentsEventConstants.Currency.UAH;
 import static com.tiktok.appevents.contents.TTContentsEventConstants.Currency.USD;
 import static com.tiktok.appevents.contents.TTContentsEventConstants.Currency.VES;
@@ -264,6 +269,11 @@ public class TestEvents {
         TTCurrency.put(HUF.toString(),HUF);
         TTCurrency.put(NZD.toString(),NZD);
         TTCurrency.put(VES.toString(),VES);
+        TTCurrency.put(BGN.toString(),BGN);
+        TTCurrency.put(IQD.toString(),IQD);
+        TTCurrency.put(JOD.toString(),JOD);
+        TTCurrency.put(LBP.toString(),LBP);
+        TTCurrency.put(TZS.toString(),TZS);
     }
 }
 

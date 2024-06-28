@@ -61,7 +61,7 @@ public class TikTokBusinessSdk {
     /**
      * api treckEvent sent Domain
      */
-    private static String apiTrackDomain = "business-api.tiktok.com";
+    private static String apiTrackDomain = "analytics.us.tiktok.com";
     /**
      * {@link LogLevel} of initialized sdk
      */

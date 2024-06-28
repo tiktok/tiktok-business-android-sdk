@@ -19,6 +19,9 @@ import java.util.Locale;
 
 import static com.tiktok.util.TTConst.*;
 
+import org.json.JSONException;
+import org.json.JSONObject;
+
 class TTAutoEventsManager {
 
     private static final String TAG = TTAutoEventsManager.class.getCanonicalName();
@@ -67,7 +70,13 @@ class TTAutoEventsManager {
 
         /* check and track InstallApp. */
         if (shouldTrackAppLifecycleEvents(AutoEvents.InstallApp)) {
-            appEventLogger.track(AutoEvents.InstallApp.name, null);
+            try {
+                JSONObject props = new JSONObject();
+                props.putOpt(TRACK_TYPE, TRACK_TYPE_AUTO);
+                appEventLogger.track(AutoEvents.InstallApp.name, props);
+            } catch (JSONException e) {
+                e.printStackTrace();
+            }
         }
 
         store.set(hm);
@@ -91,7 +100,13 @@ class TTAutoEventsManager {
             Date now = new Date();
             if (shouldTrackAppLifecycleEvents(AutoEvents.SecondDayRetention)
                     && isSatisfyRetention(firstLaunchTime, now)) {
-                appEventLogger.track(AutoEvents.SecondDayRetention.name, null);
+                try {
+                    JSONObject props = new JSONObject();
+                    props.putOpt(TRACK_TYPE, TRACK_TYPE_AUTO);
+                    appEventLogger.track(AutoEvents.SecondDayRetention.name, props);
+                } catch (JSONException e) {
+                    e.printStackTrace();
+                }
                 store.set(TTSDK_APP_2DR_TIME, timeFormat.format(now));
             }
         } catch (ParseException ignored) {
@@ -100,7 +115,13 @@ class TTAutoEventsManager {
 
     private void trackLaunchEvent() {
         if (shouldTrackAppLifecycleEvents(AutoEvents.LaunchAPP)) {
-            appEventLogger.track(AutoEvents.LaunchAPP.name, null);
+            try {
+                JSONObject props = new JSONObject();
+                props.putOpt(TRACK_TYPE, TRACK_TYPE_AUTO);
+                appEventLogger.track(AutoEvents.LaunchAPP.name, props);
+            } catch (JSONException e) {
+                e.printStackTrace();
+            }
             store.set(TTSDK_APP_LAST_LAUNCH, timeFormat.format(new Date()));
         }
     }

@@ -78,7 +78,7 @@ class TTRequest {
         paramsMap.put("tiktok_app_id", TikTokBusinessSdk.getFirstTTAppIds());
         paramsMap.putAll(options);
 
-        String url = TTUtil.mapToString("https://business-api.tiktok.com/open_api/business_sdk_config/get/", paramsMap);
+        String url = TTUtil.mapToString("https://analytics.us.tiktok.com/api/v1/app_sdk/config", paramsMap);
         logger.debug(url);
         String result = HttpRequestUtil.doGet(url, getHeadParamMap);
         logger.debug(result);
@@ -136,7 +136,7 @@ class TTRequest {
         successfulRequests = 0;
         notifyChange();
         //  dynamic req domain and version
-        String url = "https://" + TikTokBusinessSdk.getApiTrackDomain() + "/open_api/" + TikTokBusinessSdk.getApiAvailableVersion() + "/app/batch/";
+        String url = "https://" + TikTokBusinessSdk.getApiTrackDomain() + "/api/v1/app_sdk/batch";
 
         List<TTAppEvent> failedEventsToBeSaved = new ArrayList<>();
         List<TTAppEvent> failedEventsToBeDiscarded = new ArrayList<>();
@@ -324,7 +324,7 @@ class TTRequest {
     }
 
     public static String reportMonitorEvent(JSONObject stat) {
-        String url = "https://" + TikTokBusinessSdk.getApiTrackDomain() + "/open_api/" + TikTokBusinessSdk.getApiAvailableVersion() + "/app/monitor/";
+        String url = "https://" + TikTokBusinessSdk.getApiTrackDomain() + "/api/v1/app_sdk/monitor";
         return HttpRequestUtil.doPost(url, headParamMap, stat.toString());
     }
 }

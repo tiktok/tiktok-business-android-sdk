@@ -6,6 +6,9 @@
 
 package com.tiktok.appevents;
 
+import static com.tiktok.appevents.contents.TTContentsEventConstants.Params.EVENT_PROPERTY_ORDER_ID;
+import static com.tiktok.util.TTConst.TRACK_TYPE;
+import static com.tiktok.util.TTConst.TRACK_TYPE_AUTO;
 import static com.tiktok.util.TTConst.TTSDK_EXCEPTION_SDK_CATCH;
 
 import org.json.JSONArray;
@@ -25,7 +28,12 @@ class TTInAppPurchaseManager {
         try {
             productId = purchaseInfo.getPurchase().getString("productId");
             JSONObject skuDetail = purchaseInfo.getSkuDetails();
-            return getPurchaseProperties(productId, skuDetail);
+            JSONObject purchaseProperties = getPurchaseProperties(productId, skuDetail);
+            if(purchaseInfo.isAutoTrack() && purchaseProperties != null){
+                purchaseProperties.putOpt(TRACK_TYPE, TRACK_TYPE_AUTO);
+                purchaseProperties.putOpt(EVENT_PROPERTY_ORDER_ID, purchaseInfo.getPurchase().optString("orderId"));
+            }
+            return purchaseProperties;
         } catch (JSONException e) {
             TTCrashHandler.handleCrash(TAG, e, TTSDK_EXCEPTION_SDK_CATCH);
             return null;

@@ -19,7 +19,6 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.net.HttpURLConnection;
-import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.Map;
 
@@ -27,7 +26,7 @@ import javax.net.ssl.HttpsURLConnection;
 
 public class HttpRequestUtil {
 
-    private static final String MONITOR_API_TYPE = "/app/monitor/";
+    private static final String MONITOR_API_TYPE = "monitor";
     private static final String API_ERR = "api_err";
 
     public static class HttpRequestOptions {
@@ -107,14 +106,13 @@ public class HttpRequestUtil {
         String result = null;
         int responseCode = 0;
         String apiType = "";
+        String message = "";
         try {
             URL uri = new URL(url);
-            if (uri.getPath().contains(TikTokBusinessSdk.getApiAvailableVersion())) {
-                apiType = uri.getPath().split(TikTokBusinessSdk.getApiAvailableVersion())[1];
-            } else {
-                apiType = uri.getPath().split("open_api")[1];
-            }
-        } catch (MalformedURLException ignored) {}
+            apiType = uri.getPath().split("/app_sdk/")[1];
+        } catch (Throwable ignored) {
+            message = ignored.getMessage();
+        }
         HttpsURLConnection connection = connect(url, headerParamMap, options, "GET", null);
         if (connection == null) return result;
         try{
@@ -130,23 +128,32 @@ public class HttpRequestUtil {
                 result = streamToString(connection.getInputStream());
             }
         } catch (Exception e) {
+            message = e.getMessage();
             TTCrashHandler.handleCrash(TAG, e, TTSDK_EXCEPTION_NET_ERROR);
         } finally {
             if (connection != null) {
                 try {
                     connection.disconnect();
                 } catch (Exception e) {
+                    message = e.getMessage();
                     TTCrashHandler.handleCrash(TAG, e, TTSDK_EXCEPTION_NET_ERROR);
                 }
             }
         }
         long endTimeMS = System.currentTimeMillis();
         try {
-            if (getCodeFromApi(result) != 0) {
+            int dataCodeFromApi = getCodeFromApi(result);
+            if (dataCodeFromApi != 0) {
+
+                if (responseCode == HttpURLConnection.HTTP_OK) {
+                    responseCode = dataCodeFromApi;
+                    message = getMessageFromApi(result);
+                }
                 JSONObject meta = TTUtil.getMetaWithTS(initTimeMS)
                         .put("latency", endTimeMS-initTimeMS)
                         .put("api_type", apiType)
                         .put("status_code", responseCode)
+                        .put("message", message)
                         .put("log_id", getLogIDFromApi(result));
                 TikTokBusinessSdk.getAppEventLogger().monitorMetric(API_ERR, meta, null);
             }
@@ -166,14 +173,13 @@ public class HttpRequestUtil {
         String result = null;
         int responseCode = 0;
         String apiType = "";
+        String message = "";
         try {
             URL uri = new URL(url);
-            if (uri.getPath().contains(TikTokBusinessSdk.getApiAvailableVersion())) {
-                apiType = uri.getPath().split(TikTokBusinessSdk.getApiAvailableVersion())[1];
-            } else {
-                apiType = uri.getPath().split("open_api")[1];
-            }
-        } catch (MalformedURLException ignored) {}
+            apiType = uri.getPath().split("/app_sdk/")[1];
+        } catch (Throwable ignored) {
+            message = ignored.getMessage();
+        }
 
         HttpURLConnection connection = null;
         OutputStream outputStream = null;
@@ -207,12 +213,14 @@ public class HttpRequestUtil {
                 ttLogger.info("doPost result: %s", result == null ? String.valueOf(responseCode) : result);
             }
         } catch (Exception e) {
+            message = e.getMessage();
             TTCrashHandler.handleCrash(TAG, e, TTSDK_EXCEPTION_NET_ERROR);
         } finally {
             if (outputStream != null) {
                 try {
                     outputStream.close();
                 } catch (IOException e) {
+                    message = e.getMessage();
                     TTCrashHandler.handleCrash(TAG, e, TTSDK_EXCEPTION_NET_ERROR);
                 }
             }
@@ -220,17 +228,26 @@ public class HttpRequestUtil {
                 try {
                     connection.disconnect();
                 } catch (Exception e){
+                    message = e.getMessage();
                     TTCrashHandler.handleCrash(TAG, e, TTSDK_EXCEPTION_NET_ERROR);
                 }
             }
         }
         long endTimeMS = System.currentTimeMillis();
         try {
-            if (getCodeFromApi(result) != 0 && !url.contains(MONITOR_API_TYPE)) {
+            int dataCodeFromApi = getCodeFromApi(result);
+            if (dataCodeFromApi != 0) {
+                if (responseCode == HttpURLConnection.HTTP_OK) {
+                    responseCode = dataCodeFromApi;
+                    message = getMessageFromApi(result);
+                }
+            }
+            if (dataCodeFromApi != 0 && !url.contains(MONITOR_API_TYPE)) {
                 JSONObject meta = TTUtil.getMetaWithTS(initTimeMS)
                         .put("latency", endTimeMS-initTimeMS)
                         .put("api_type", apiType)
                         .put("status_code", responseCode)
+                        .put("message", message)
                         .put("log_id", getLogIDFromApi(result));
                 TikTokBusinessSdk.getAppEventLogger().monitorMetric(API_ERR, meta, null);
             }
@@ -262,6 +279,18 @@ public class HttpRequestUtil {
             }
         }
         return -1;
+    }
+
+    public static String getMessageFromApi(@Nullable String resp) {
+        if (resp != null) {
+            try {
+                JSONObject respJson = new JSONObject(resp);
+                return respJson.getString("message");
+            } catch (Exception ignored) {
+                return ignored.getMessage();
+            }
+        }
+        return "result is empty";
     }
 
     public static String getLogIDFromApi(@Nullable String resp) {
