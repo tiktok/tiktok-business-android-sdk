@@ -6,6 +6,8 @@
 
 package com.tiktok.appevents;
 
+import static com.tiktok.TikTokBusinessSdk.INVALID_ID;
+import static com.tiktok.util.TTConst.ERROR_MESSAGE_INVALID_ID;
 import static com.tiktok.util.TTConst.TTSDK_EXCEPTION_SDK_CATCH;
 
 import android.text.TextUtils;
@@ -28,6 +30,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 public class TTAppEventLogger {
     static final String SKIP_FLUSHING_BECAUSE_GLOBAL_SWITCH_IS_TURNED_OFF = "Skip flushing because global switch is turned off";
@@ -80,7 +83,9 @@ public class TTAppEventLogger {
                             List<TTConst.AutoEvents> disabledEvents,
                             int flushTime,
                             boolean monitorDisable,
-                            long initTimeMS) {
+                            long initTimeMS,
+                            final TikTokBusinessSdk.TTInitCallback callback,
+                            AtomicBoolean sdkInitialized) {
         logger = new TTLogger(TAG, TikTokBusinessSdk.getLogLevel());
         this.lifecycleTrackEnable = lifecycleTrackEnable;
         this.disabledEvents = disabledEvents;
@@ -98,6 +103,22 @@ public class TTAppEventLogger {
         autoEventsManager = new TTAutoEventsManager(this);
         addToQ(SystemInfoUtil::initUserAgent);
         addToQ(TTAppEventsQueue::clearAll);
+        addToQ(() -> {
+            try {
+                if (TextUtils.isEmpty(TikTokBusinessSdk.getTTAppId()) || TextUtils.isEmpty(TikTokBusinessSdk.getAppId())) {
+                    if (callback != null) {
+                        callback.fail(INVALID_ID, ERROR_MESSAGE_INVALID_ID);
+                    }
+                } else {
+                    sdkInitialized.set(true);
+                    if (callback != null) {
+                        callback.success();
+                    }
+                }
+            } catch (Throwable e) {
+                e.printStackTrace();
+            }
+        });
         addToQ(TTCrashHandler::initCrashReporter);
         fetchGlobalConfig(0);
         monitorMetric("init_start", TTUtil.getMetaWithTS(initTimeMS), null);

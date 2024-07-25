@@ -10,9 +10,11 @@ import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.webkit.WebSettings;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.Switch;
@@ -54,6 +56,7 @@ public class InitFragment extends Fragment {
         ((Switch)(root.findViewById(R.id.debug_status))).setChecked(InitViewModel.debugModeSwitch);
         ((Switch)(root.findViewById(R.id.limited_status))).setChecked(InitViewModel.lduModeSwitch);
         ((Switch)(root.findViewById(R.id.iap_status))).setChecked(InitViewModel.autoIapTrack);
+        ((Switch)(root.findViewById(R.id.init_with_callback))).setChecked(InitViewModel.initWithCallback);
         init.setOnClickListener(v -> {
             HomeViewModel homeViewModel = new ViewModelProvider(this).get(HomeViewModel.class);
 
@@ -151,6 +154,11 @@ public class InitFragment extends Fragment {
                 }else {
                     InitViewModel.autoIapTrack = false;
                 }
+                if(((Switch)(root.findViewById(R.id.init_with_callback))).isChecked()){
+                    InitViewModel.initWithCallback = true;
+                }else {
+                    InitViewModel.initWithCallback = false;
+                }
                 if(appId.getText().toString() == null || appId.getText().toString().isEmpty()){
                     ttConfig.setAppId("com.tiktok.iabtest");
                 } else {
@@ -161,8 +169,24 @@ public class InitFragment extends Fragment {
                 } else {
                     ttConfig.setTTAppId(ttAppId.getText().toString());
                 }
-                TikTokBusinessSdk.initializeSdk(ttConfig);
+                Log.e("Initialization state", TikTokBusinessSdk.isInitialized()+"");
+                if(InitViewModel.initWithCallback){
+                    TikTokBusinessSdk.initializeSdk(ttConfig, new TikTokBusinessSdk.TTInitCallback() {
+                        @Override
+                        public void success() {
+                            WebSettings.getDefaultUserAgent(TikTokBusinessSdk.getApplicationContext());
+                            TikTokBusinessSdk.trackEvent("test");
+                        }
 
+                        @Override
+                        public void fail(int code, String msg) {
+                            Log.e("init error", "code:"+code+", msg:"+msg);
+                        }
+                    });
+                }else {
+                    TikTokBusinessSdk.initializeSdk(ttConfig);
+                }
+                Log.e("Initialization state", TikTokBusinessSdk.isInitialized()+"");
                 // check if user info is cached & init
                 // homeViewModel.checkInitTTAM();
 

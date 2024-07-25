@@ -21,6 +21,7 @@ public class InitViewModel extends AndroidViewModel {
     public static boolean loggingStatus = true;
     public static boolean launchStatus = true;
     public static boolean retentionStatus = true;
+    public static boolean initWithCallback = true;
 
     public InitViewModel(Application application) {
         super(application);
