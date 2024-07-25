@@ -13,6 +13,7 @@ public class TTConst {
     public static final String TTSDK_APP_FIRST_INSTALL = "com.tiktok.sdk.firstInstall";
     public static final String TTSDK_APP_LAST_LAUNCH = "com.tiktok.sdk.lastLaunch";
     public static final String TTSDK_APP_2DR_TIME = "com.tiktok.sdk.2drTime";
+    public static final String TTSDK_USER_AGENT = "com.tiktok.user.agent";
 
     public static final String TTSDK_PREFIX = "com.tiktok";
     public static final int TTSDK_EXCEPTION_NET_ERROR = 1;
@@ -21,6 +22,7 @@ public class TTConst {
 
     public static final String TRACK_TYPE = "type";
     public static final String TRACK_TYPE_AUTO = "auto";
+    public static final String ERROR_MESSAGE_INVALID_ID = "Invalid appId or tiktokAppId";
 
     public static enum ApiErrorCodes {
         PARTIAL_SUCCESS(20001),

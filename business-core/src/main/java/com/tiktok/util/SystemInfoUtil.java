@@ -7,6 +7,7 @@
 package com.tiktok.util;
 
 import static com.tiktok.util.TTConst.TTSDK_EXCEPTION_SDK_CATCH;
+import static com.tiktok.util.TTConst.TTSDK_USER_AGENT;
 
 import android.app.Application;
 import android.content.Context;
@@ -16,6 +17,7 @@ import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.os.Build;
 import android.telephony.TelephonyManager;
+import android.text.TextUtils;
 import android.webkit.WebSettings;
 import androidx.annotation.RequiresApi;
 
@@ -105,7 +107,12 @@ public class SystemInfoUtil {
         TikTokBusinessSdk.getAppEventLogger().monitorMetric("ua_init", TTUtil.getMetaWithTS(initTimeMS), null);
         Throwable ex = null;
         try {
-            userAgent = WebSettings.getDefaultUserAgent(TikTokBusinessSdk.getApplicationContext());
+            TTKeyValueStore store = new TTKeyValueStore(TikTokBusinessSdk.getApplicationContext());
+            userAgent = store.get(TTSDK_USER_AGENT);
+            if (TextUtils.isEmpty(userAgent)) {
+                userAgent = WebSettings.getDefaultUserAgent(TikTokBusinessSdk.getApplicationContext());
+                store.set(TTSDK_USER_AGENT, userAgent);
+            }
         } catch (Exception e) {
             ex = e;
             userAgent = System.getProperty("http.agent");

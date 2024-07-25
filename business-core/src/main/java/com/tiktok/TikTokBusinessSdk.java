@@ -82,6 +82,11 @@ public class TikTokBusinessSdk {
     private static AtomicBoolean sdkLDUModeSwitch = new AtomicBoolean(false);
 
     /**
+     *  initialization state
+     */
+    private static AtomicBoolean sdkInitialized = new AtomicBoolean(false);
+
+    /**
 
      * save the test Event code
      */
@@ -99,6 +104,7 @@ public class TikTokBusinessSdk {
     private static final String sessionID = UUID.randomUUID().toString();
 
     private static CrashListener onCrashListener;
+    public static final int INVALID_ID = -2;
 
     private TikTokBusinessSdk(@NonNull TTConfig ttConfig) {
         /* sdk logger & loglevel */
@@ -131,14 +137,17 @@ public class TikTokBusinessSdk {
         return ttConfig.ttAppId.toString();
     }
 
-    public static synchronized boolean isInitialized() {
-        return ttSdk != null;
+    public static boolean isInitialized() {
+        return ttSdk != null && sdkInitialized.get();
     }
 
     /**
      * Only one TikTokBusinessSdk instance exist within a single App process
      */
-    public static synchronized void initializeSdk(TTConfig ttConfig) {
+    public static void initializeSdk(TTConfig ttConfig) {
+        initializeSdk(ttConfig, null);
+    }
+    public static void initializeSdk(TTConfig ttConfig, final TTInitCallback callback) {
         if (ttSdk != null) return;
         long initTimeMS = System.currentTimeMillis();
         try {
@@ -165,7 +174,7 @@ public class TikTokBusinessSdk {
         TTUserInfo.reset(TikTokBusinessSdk.getApplicationContext(), false);
         // the appEventLogger instance will be the main interface to track events
         appEventLogger = new TTAppEventLogger(ttConfig.autoEvent,ttConfig.disabledEvents,
-                ttConfig.flushTime, ttConfig.disableMetrics, initTimeMS);
+                ttConfig.flushTime, ttConfig.disableMetrics, initTimeMS, callback, sdkInitialized);
         if (ttConfig.autoIapTrack) {
             TTInAppPurchaseWrapper.registerIapTrack();
         }
@@ -217,7 +226,7 @@ public class TikTokBusinessSdk {
      * @param nl
      * @param nfl
      */
-    public static synchronized void setUpSdkListeners(
+    public static void setUpSdkListeners(
             MemoryListener ml,
             DiskStatusListener dl,
             NetworkListener nl,
@@ -543,16 +552,16 @@ public class TikTokBusinessSdk {
      * @param phoneNumber
      * @param email
      */
-    public static synchronized void identify(String externalId,
+    public static void identify(String externalId,
                                              @Nullable String externalUserName,
                                              @Nullable String phoneNumber,
                                              @Nullable String email) {
-        long initTimeMS = System.currentTimeMillis();
-        boolean isReset = appEventLogger.identify(externalId, externalUserName, phoneNumber, email);
-        if (!isReset) {
-            return;
-        }
         try {
+            long initTimeMS = System.currentTimeMillis();
+            boolean isReset = appEventLogger.identify(externalId, externalUserName, phoneNumber, email);
+            if (!isReset) {
+                return;
+            }
             long endTimeMS = System.currentTimeMillis();
             JSONObject meta = TTUtil.getMetaWithTS(initTimeMS)
                     .put("latency", endTimeMS-initTimeMS)
@@ -570,10 +579,10 @@ public class TikTokBusinessSdk {
      * - when switching to another account,
      * in that case, should call a subsequent {@link TikTokBusinessSdk#identify(String, String, String, String)}
      */
-    public static synchronized void logout() {
-        long initTimeMS = System.currentTimeMillis();
-        appEventLogger.logout();
+    public static void logout() {
         try {
+            long initTimeMS = System.currentTimeMillis();
+            appEventLogger.logout();
             long endTimeMS = System.currentTimeMillis();
             JSONObject meta = TTUtil.getMetaWithTS(initTimeMS)
                     .put("latency", endTimeMS-initTimeMS);
@@ -601,6 +610,13 @@ public class TikTokBusinessSdk {
     public static void crashSDK() {
         // only used for test purposes
         throw new RuntimeException("force crash from sdk");
+    }
+
+    public interface TTInitCallback {
+
+        void success();
+
+        void fail(int code, String msg);
     }
 
     /**
