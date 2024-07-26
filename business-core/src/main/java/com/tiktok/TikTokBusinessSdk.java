@@ -174,7 +174,8 @@ public class TikTokBusinessSdk {
         TTUserInfo.reset(TikTokBusinessSdk.getApplicationContext(), false);
         // the appEventLogger instance will be the main interface to track events
         appEventLogger = new TTAppEventLogger(ttConfig.autoEvent,ttConfig.disabledEvents,
-                ttConfig.flushTime, ttConfig.disableMetrics, initTimeMS, callback, sdkInitialized);
+                ttConfig.flushTime, ttConfig.disableMetrics);
+        appEventLogger.initConfig(initTimeMS, callback, sdkInitialized);
         if (ttConfig.autoIapTrack) {
             TTInAppPurchaseWrapper.registerIapTrack();
         }
