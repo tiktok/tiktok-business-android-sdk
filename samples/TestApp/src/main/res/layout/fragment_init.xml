@@ -377,6 +377,27 @@
                             android:checked="true"
                             android:padding="5dp" />
                     </LinearLayout>
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal">
+
+                        <TextView
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_gravity="start"
+                            android:layout_weight="1"
+                            android:padding="5dp"
+                            android:text="init with callback:" />
+
+                        <Switch
+                            android:id="@+id/init_with_callback"
+                            android:layout_width="80dp"
+                            android:layout_height="30dp"
+                            android:layout_gravity="end"
+                            android:checked="true"
+                            android:padding="5dp" />
+                    </LinearLayout>
                 </LinearLayout>
             </ScrollView>
 
