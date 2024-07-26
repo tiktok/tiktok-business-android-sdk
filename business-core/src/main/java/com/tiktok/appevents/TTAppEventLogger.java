@@ -82,10 +82,7 @@ public class TTAppEventLogger {
     public TTAppEventLogger(boolean lifecycleTrackEnable,
                             List<TTConst.AutoEvents> disabledEvents,
                             int flushTime,
-                            boolean monitorDisable,
-                            long initTimeMS,
-                            final TikTokBusinessSdk.TTInitCallback callback,
-                            AtomicBoolean sdkInitialized) {
+                            boolean monitorDisable) {
         logger = new TTLogger(TAG, TikTokBusinessSdk.getLogLevel());
         this.lifecycleTrackEnable = lifecycleTrackEnable;
         this.disabledEvents = disabledEvents;
@@ -101,6 +98,9 @@ public class TTAppEventLogger {
         this.lifecycle.addObserver(activityLifecycleCallbacks);
 
         autoEventsManager = new TTAutoEventsManager(this);
+    }
+
+    public void initConfig(long initTimeMS, final TikTokBusinessSdk.TTInitCallback callback, AtomicBoolean sdkInitialized){
         addToQ(SystemInfoUtil::initUserAgent);
         addToQ(TTAppEventsQueue::clearAll);
         addToQ(() -> {
