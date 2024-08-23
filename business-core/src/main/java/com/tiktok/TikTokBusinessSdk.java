@@ -134,6 +134,9 @@ public class TikTokBusinessSdk {
     }
 
     private String createTestEventCode(@NonNull TTConfig ttConfig) {
+        if(ttConfig == null || ttConfig.ttAppId == null){
+            return "";
+        }
         return ttConfig.ttAppId.toString();
     }
 
@@ -148,7 +151,7 @@ public class TikTokBusinessSdk {
         initializeSdk(ttConfig, null);
     }
     public static void initializeSdk(TTConfig ttConfig, final TTInitCallback callback) {
-        if (ttSdk != null) return;
+        if (ttSdk != null || ttConfig == null) return;
         long initTimeMS = System.currentTimeMillis();
         try {
             Thread.UncaughtExceptionHandler existingExHandler = Thread.getDefaultUncaughtExceptionHandler();
@@ -201,6 +204,9 @@ public class TikTokBusinessSdk {
      * before users' consent.
      */
     public static void startTrack() {
+        if(appEventLogger == null){
+            return;
+        }
         if (!networkSwitch.get()) {
             networkSwitch.set(true);
             appEventLogger.forceFlush();
@@ -284,23 +290,38 @@ public class TikTokBusinessSdk {
      */
     @Deprecated
     public static void trackEvent(String event) {
+        if(appEventLogger == null){
+            return;
+        }
         appEventLogger.track(event, null);
     }
 
     @Deprecated
     public static void trackEvent(String event, String eventId) {
+        if(appEventLogger == null){
+            return;
+        }
         appEventLogger.track(event, null, eventId);
     }
 
     public static void trackTTEvent(TTBaseEvent event) {
+        if(appEventLogger == null){
+            return;
+        }
         appEventLogger.track(event.eventName, event.properties, event.eventId);
     }
 
     public static void trackTTEvent(EventName event) {
+        if(appEventLogger == null){
+            return;
+        }
         appEventLogger.track(event.toString(), null);
     }
 
     public static void trackTTEvent(EventName event, String eventId) {
+        if(appEventLogger == null){
+            return;
+        }
         appEventLogger.track(event.toString(), null, eventId);
     }
 
@@ -329,10 +350,16 @@ public class TikTokBusinessSdk {
      */
     @Deprecated
     public static void trackEvent(String event, @Nullable JSONObject props) {
+        if(appEventLogger == null){
+            return;
+        }
         appEventLogger.track(event, props, "");
     }
     @Deprecated
     public static void trackEvent(String event, @Nullable JSONObject props, String eventId) {
+        if(appEventLogger == null){
+            return;
+        }
         appEventLogger.track(event, props, eventId);
     }
 
@@ -340,6 +367,9 @@ public class TikTokBusinessSdk {
      * Track a list of google play purchases at the same time.
      */
     public static void trackGooglePlayPurchase(List<TTPurchaseInfo> purchaseInfos) {
+        if(appEventLogger == null){
+            return;
+        }
         appEventLogger.trackPurchase(purchaseInfos);
     }
 
@@ -360,6 +390,9 @@ public class TikTokBusinessSdk {
      * in the memory.
      */
     public static void flush() {
+        if(appEventLogger == null){
+            return;
+        }
         appEventLogger.forceFlush();
     }
 
@@ -369,6 +402,9 @@ public class TikTokBusinessSdk {
      * Calling this method is discouraged
      */
     public static void clearAll() {
+        if(appEventLogger == null){
+            return;
+        }
         appEventLogger.clearAll();
     }
 
@@ -376,8 +412,9 @@ public class TikTokBusinessSdk {
      * applicationContext getter
      */
     public static Application getApplicationContext() {
-        if (ttSdk == null)
-            throw new RuntimeException("TikTokBusinessSdk instance is not initialized");
+        if (ttSdk == null){
+            return null;
+        }
         return config.application;
     }
 
@@ -389,6 +426,9 @@ public class TikTokBusinessSdk {
     }
 
     public static boolean isGaidCollectionEnabled() {
+        if(config == null){
+            return false;
+        }
         return config.advertiserIDCollectionEnable;
     }
 
@@ -403,6 +443,9 @@ public class TikTokBusinessSdk {
      * returns api_id
      */
     public static String getAppId() {
+        if(config == null){
+            return "";
+        }
         return config.appId;
     }
 
@@ -410,14 +453,23 @@ public class TikTokBusinessSdk {
      * returns api_id
      */
     public static String getTTAppId() {
+        if(config == null){
+            return "";
+        }
         return config.ttAppId;
     }
 
     public static String[] getTTAppIds() {
+        if(config == null){
+            return new String[0];
+        }
         return config.ttAppIds;
     }
 
     public static BigInteger getFirstTTAppIds() {
+        if(config == null){
+            return new BigInteger("0");
+        }
         return config.ttFirstAppId;
     }
 
@@ -469,10 +521,7 @@ public class TikTokBusinessSdk {
      */
 
     public static boolean onlyAppIdProvided() {
-        if(config.appId == null){
-            logger.warn("AppId should be checked before, this path should not be accessed");
-        }
-        return config.ttAppId == null;
+        return config == null || config.ttAppId == null;
     }
 
     /**
@@ -494,6 +543,9 @@ public class TikTokBusinessSdk {
      * if globalSwitch request is sent to network and api returns true, then check whether adInfoRun is set to true
      */
     public static boolean isSystemActivated() {
+        if(logger == null){
+            return false;
+        }
         Boolean sdkGlobalSwitch = TikTokBusinessSdk.getSdkGlobalSwitch();
         if (!sdkGlobalSwitch) {
             logger.info("Global switch is off, ignore all operations");

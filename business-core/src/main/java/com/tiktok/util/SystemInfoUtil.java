@@ -104,9 +104,9 @@ public class SystemInfoUtil {
     public static void initUserAgent() {
         if (userAgent != null) return;
         long initTimeMS = System.currentTimeMillis();
-        TikTokBusinessSdk.getAppEventLogger().monitorMetric("ua_init", TTUtil.getMetaWithTS(initTimeMS), null);
         Throwable ex = null;
         try {
+            TikTokBusinessSdk.getAppEventLogger().monitorMetric("ua_init", TTUtil.getMetaWithTS(initTimeMS), null);
             TTKeyValueStore store = new TTKeyValueStore(TikTokBusinessSdk.getApplicationContext());
             userAgent = store.get(TTSDK_USER_AGENT);
             if (TextUtils.isEmpty(userAgent)) {

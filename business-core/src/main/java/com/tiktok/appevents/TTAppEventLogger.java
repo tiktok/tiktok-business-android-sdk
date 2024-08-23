@@ -207,10 +207,18 @@ public class TTAppEventLogger {
             return false;
         }
         sharedInstance.setIdentified();
-        sharedInstance.setExternalId(externalId);
-        sharedInstance.setExternalUserName(externalUserName);
-        sharedInstance.setPhoneNumber(phoneNumber);
-        sharedInstance.setEmail(email);
+        if (!TextUtils.isEmpty(externalId)) {
+            sharedInstance.setExternalId(externalId);
+        }
+        if (!TextUtils.isEmpty(externalUserName)) {
+            sharedInstance.setExternalUserName(externalUserName);
+        }
+        if (!TextUtils.isEmpty(phoneNumber)) {
+            sharedInstance.setPhoneNumber(phoneNumber);
+        }
+        if (!TextUtils.isEmpty(email)) {
+            sharedInstance.setEmail(email);
+        }
         trackEvent(TTAppEvent.TTAppEventType.identify, null, null, null);
         flushWithReason(TTAppEventLogger.FlushReason.IDENTIFY);
         return true;
