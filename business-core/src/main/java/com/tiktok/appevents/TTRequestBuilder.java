@@ -66,12 +66,12 @@ class TTRequestBuilder {
         }
         TTIdentifierFactory.AdIdInfo adIdInfo = null;
         long initTimeMS = System.currentTimeMillis();
-        TikTokBusinessSdk.getAppEventLogger().monitorMetric("did_start", TTUtil.getMetaWithTS(initTimeMS), null);
-        if (TikTokBusinessSdk.isGaidCollectionEnabled()) {
-            // fetch gaid info through google service
-            adIdInfo = TTIdentifierFactory.getGoogleAdIdInfo(TikTokBusinessSdk.getApplicationContext());
-        }
         try {
+            TikTokBusinessSdk.getAppEventLogger().monitorMetric("did_start", TTUtil.getMetaWithTS(initTimeMS), null);
+            if (TikTokBusinessSdk.isGaidCollectionEnabled()) {
+                // fetch gaid info through google service
+                adIdInfo = TTIdentifierFactory.getGoogleAdIdInfo(TikTokBusinessSdk.getApplicationContext());
+            }
             long endTimeMS = System.currentTimeMillis();
             JSONObject meta = TTUtil.getMetaWithTS(endTimeMS)
                     .put("latency", endTimeMS-initTimeMS)
