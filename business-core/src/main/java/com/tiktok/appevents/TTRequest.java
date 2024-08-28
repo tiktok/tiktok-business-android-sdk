@@ -139,7 +139,7 @@ class TTRequest {
         String url = "https://" + TikTokBusinessSdk.getApiTrackDomain() + "/api/v1/app_sdk/batch";
 
         List<TTAppEvent> failedEventsToBeSaved = new ArrayList<>();
-        List<TTAppEvent> failedEventsToBeDiscarded = new ArrayList<>();
+        int failedEventsToBeDiscardedSize = 0;
 
         List<List<TTAppEvent>> chunks = averageAssign(appEventList, MAX_EVENT_SIZE);
 
@@ -185,36 +185,11 @@ class TTRequest {
                     JSONObject resultJson = new JSONObject(result);
                     int code = resultJson.getInt("code");
 
-                    if (TikTokBusinessSdk.isInSdkDebugMode() || code == TTConst.ApiErrorCodes.API_ERROR.code) {
-                        failedEventsToBeDiscarded.addAll(currentBatch);
-                        failedRequests += currentBatch.size();
-                    }
-                    // some events made it while others not.
-                    else if (code == TTConst.ApiErrorCodes.PARTIAL_SUCCESS.code) {
-                        try {
-                            JSONArray partialFailedEvents = resultJson.getJSONObject("data").getJSONArray("failed_events");
-                            int length = partialFailedEvents.length();
-                            Set<Integer> failedIndices = new HashSet<>();
-                            for (int i = 0; i < length; i++) {
-                                JSONObject errorObj = partialFailedEvents.getJSONObject(i);
-                                failedIndices.add(errorObj.getInt("order_in_batch"));
-                            }
-                            int totalSize = currentBatch.size();
-                            for (int i = 0; i < totalSize; i++) {
-                                TTAppEvent curr = currentBatch.get(i);
-                                if (failedIndices.contains(i)) {
-                                    failedEventsToBeDiscarded.add(curr);
-                                    failedRequests += 1;
-                                } else {
-                                    successfullySentRequests.add(curr);
-                                    successfulRequests += 1;
-                                }
-                            }
-                        } catch (Exception e) {
-                            TTCrashHandler.handleCrash(TAG, e, TTSDK_EXCEPTION_SDK_CATCH);
-                            failedEventsToBeSaved.addAll(currentBatch);
-                            failedRequests += currentBatch.size();
+                    if (TikTokBusinessSdk.isInSdkDebugMode() || code == TTConst.ApiErrorCodes.API_ERROR.code || code == TTConst.ApiErrorCodes.PARTIAL_SUCCESS.code) {
+                        if(currentBatch != null){
+                            failedEventsToBeDiscardedSize+=currentBatch.size();
                         }
+                        failedRequests += currentBatch.size();
                     } else if (code != 0) {
                         failedEventsToBeSaved.addAll(currentBatch);
                         failedRequests += currentBatch.size();
@@ -250,7 +225,7 @@ class TTRequest {
             logger.debug("Failed to flush %d events, will save them to disk", failedEventsToBeSaved.size());
         }
         // api returns some unrecoverable error
-        int discardedEventCount = failedEventsToBeDiscarded.size();
+        int discardedEventCount = failedEventsToBeDiscardedSize;
         if (discardedEventCount != 0) {
             logger.debug("Failed to flush " + discardedEventCount + " events, will discard them");
             TTAppEventLogger.totalDumped += discardedEventCount;
