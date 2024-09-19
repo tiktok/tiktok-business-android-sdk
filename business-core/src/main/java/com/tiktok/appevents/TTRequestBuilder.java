@@ -6,6 +6,7 @@
 
 package com.tiktok.appevents;
 
+import static com.tiktok.appevents.TTRequest.LIBRARY_NAME;
 import static com.tiktok.util.TTConst.TTSDK_EXCEPTION_SDK_CATCH;
 
 import android.content.Context;
@@ -184,7 +185,7 @@ class TTRequestBuilder {
         }
 
         JSONObject library = new JSONObject();
-        library.put("name", "tiktok/tiktok-business-android-sdk");
+        library.put("name", "tiktok/" + LIBRARY_NAME);
         library.put("version", SystemInfoUtil.getSDKVersion());
 
         JSONObject context = new JSONObject();

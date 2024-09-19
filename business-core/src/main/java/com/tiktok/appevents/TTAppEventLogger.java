@@ -10,6 +10,8 @@ import static com.tiktok.TikTokBusinessSdk.INVALID_ID;
 import static com.tiktok.util.TTConst.ERROR_MESSAGE_INVALID_ID;
 import static com.tiktok.util.TTConst.TTSDK_EXCEPTION_SDK_CATCH;
 
+import android.os.Handler;
+import android.os.Looper;
 import android.text.TextUtils;
 
 import androidx.annotation.NonNull;
@@ -95,7 +97,16 @@ public class TTAppEventLogger {
 
         /** ActivityLifecycleCallbacks & LifecycleObserver */
         TTActivityLifecycleCallbacksListener activityLifecycleCallbacks = new TTActivityLifecycleCallbacksListener(this);
-        this.lifecycle.addObserver(activityLifecycleCallbacks);
+        if (Thread.currentThread() == Looper.getMainLooper().getThread()) {
+            TTAppEventLogger.this.lifecycle.addObserver(activityLifecycleCallbacks);
+        } else {
+            new Handler(Looper.getMainLooper()).post(new Runnable() {
+                @Override
+                public void run() {
+                    TTAppEventLogger.this.lifecycle.addObserver(activityLifecycleCallbacks);
+                }
+            });
+        }
 
         autoEventsManager = new TTAutoEventsManager(this);
     }
