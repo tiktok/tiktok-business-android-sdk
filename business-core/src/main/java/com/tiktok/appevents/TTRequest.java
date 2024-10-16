@@ -57,7 +57,9 @@ class TTRequest {
         try {
             Class.forName("com.unity3d.player.UnityPlayer");
             LIBRARY_NAME = "tiktok-business-unity-android-sdk";
-        } catch (ClassNotFoundException e) {}
+        } catch (Throwable e) {
+
+        }
         String ua = String.format("tiktok-business-android-sdk/%s/%s",
                 BuildConfig.VERSION_NAME,
                 TikTokBusinessSdk.getApiAvailableVersion());
@@ -75,6 +77,9 @@ class TTRequest {
         paramsMap.put("app_id", TikTokBusinessSdk.getAppId());
         // the rest params are for the sake of simplicity of debugging
         paramsMap.put("client", "android");
+        if(TikTokBusinessSdk.isInSdkDebugMode()) {
+            paramsMap.put("debug", "true");
+        }
         paramsMap.put("sdk_version", SystemInfoUtil.getSDKVersion());
         //  for fix bug in lower Android API edition. Maybe there is something wrong with language package, url can not be parsed successfully with some special char
         //  paramsMap.put("app_name", SystemInfoUtil.getAppName());
@@ -84,6 +89,20 @@ class TTRequest {
 
         String url = TTUtil.mapToString("https://analytics.us.tiktok.com/api/v1/app_sdk/config", paramsMap);
         logger.debug(url);
+        if (TextUtils.isEmpty(TikTokBusinessSdk.getTTAppId()) || TextUtils.isEmpty(TikTokBusinessSdk.getAppId())) {
+            try {
+                long endTimeMS = System.currentTimeMillis();
+                JSONObject meta = TTUtil.getMetaWithTS(initTimeMS)
+                        .put("latency", endTimeMS - initTimeMS)
+                        .put("success", false)
+                        .put("log_id", "");
+                TikTokBusinessSdk.getAppEventLogger().monitorMetric("config_api", meta, null);
+            } catch (Exception ignored) {
+            }
+            JSONObject result = new JSONObject();
+            result.optBoolean("enable_sdk", false);
+            return result;
+        }
         String result = HttpRequestUtil.doGet(url, getHeadParamMap);
         logger.debug(result);
         JSONObject config = null;

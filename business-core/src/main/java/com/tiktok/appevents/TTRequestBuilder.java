@@ -45,7 +45,7 @@ class TTRequestBuilder {
                 result.put("tiktok_app_id", TikTokBusinessSdk.getFirstTTAppIds());
             }
             if (TikTokBusinessSdk.isInSdkDebugMode()) {
-                result.put("test_event_code", String.valueOf(TikTokBusinessSdk.getFirstTTAppIds()));
+                result.put("test_event_code", String.valueOf(TikTokBusinessSdk.getTTAppId()));
             }
             result.put("event_source", "APP_EVENTS_SDK");
         } catch (Exception e) {
