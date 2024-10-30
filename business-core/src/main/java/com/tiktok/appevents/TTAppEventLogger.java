@@ -63,6 +63,8 @@ public class TTAppEventLogger {
 
     // for internal debug purpose
     int flushId = 0;
+    public static boolean autoTrackRetentionEnable = true;
+    public static boolean autoTrackPaymentEnable = true;
 
     // similar to what javascript has, so that all the internal tasks are executed in a waterfall fashion, avoiding race conditions
     static ScheduledExecutorService eventLoop = Executors.newSingleThreadScheduledExecutor(new TTThreadFactory());
@@ -97,15 +99,19 @@ public class TTAppEventLogger {
 
         /** ActivityLifecycleCallbacks & LifecycleObserver */
         TTActivityLifecycleCallbacksListener activityLifecycleCallbacks = new TTActivityLifecycleCallbacksListener(this);
-        if (Thread.currentThread() == Looper.getMainLooper().getThread()) {
-            TTAppEventLogger.this.lifecycle.addObserver(activityLifecycleCallbacks);
-        } else {
-            new Handler(Looper.getMainLooper()).post(new Runnable() {
-                @Override
-                public void run() {
-                    TTAppEventLogger.this.lifecycle.addObserver(activityLifecycleCallbacks);
-                }
-            });
+        try {
+            if (Looper.myLooper() == Looper.getMainLooper()) {
+                TTAppEventLogger.this.lifecycle.addObserver(activityLifecycleCallbacks);
+            } else {
+                new Handler(Looper.getMainLooper()).post(new Runnable() {
+                    @Override
+                    public void run() {
+                        TTAppEventLogger.this.lifecycle.addObserver(activityLifecycleCallbacks);
+                    }
+                });
+            }
+        }catch (Throwable throwable){
+
         }
 
         autoEventsManager = new TTAutoEventsManager(this);
@@ -440,6 +446,8 @@ public class TTAppEventLogger {
                 TikTokBusinessSdk.setApiTrackDomain(trackEventDomain);
                 logger.debug("available_version=" + availableVersion);
                 TikTokBusinessSdk.setGlobalConfigFetched();
+                autoTrackRetentionEnable = businessSdkConfig.optBoolean("auto_track_Retention_enable");
+                autoTrackPaymentEnable = businessSdkConfig.optBoolean("auto_track_Payment_enable");
             } catch (JSONException e) {
                 e.printStackTrace();
                 logger.warn("Errors happened during initGlobalConfig because the structure of api result is not correct");

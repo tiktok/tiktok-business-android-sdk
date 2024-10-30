@@ -7,6 +7,7 @@
 package com.tiktok.iap;
 
 import static com.tiktok.TikTokBusinessSdk.getApplicationContext;
+import static com.tiktok.appevents.TTAppEventLogger.autoTrackPaymentEnable;
 
 import android.content.Context;
 
@@ -45,7 +46,7 @@ public class TTInAppPurchaseWrapper {
             mContext = getApplicationContext();
             PurchasesUpdatedListener purchaseUpdateListener = (billingResult, purchases) -> {
 
-                if (billingResult != null && billingResult.getResponseCode() == BillingClient.BillingResponseCode.OK
+                if (autoTrackPaymentEnable && billingResult != null && billingResult.getResponseCode() == BillingClient.BillingResponseCode.OK
                         && purchases != null) {
                     for (Purchase purchase : purchases) {
                         if (purchase == null) {
