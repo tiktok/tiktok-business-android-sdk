@@ -17,6 +17,7 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.Locale;
 
+import static com.tiktok.appevents.TTAppEventLogger.autoTrackRetentionEnable;
 import static com.tiktok.util.TTConst.*;
 
 import org.json.JSONException;
@@ -99,7 +100,8 @@ class TTAutoEventsManager {
             Date firstLaunchTime = timeFormat.parse(firstInstall);
             Date now = new Date();
             if (shouldTrackAppLifecycleEvents(AutoEvents.SecondDayRetention)
-                    && isSatisfyRetention(firstLaunchTime, now)) {
+                    && isSatisfyRetention(firstLaunchTime, now)
+                    && autoTrackRetentionEnable) {
                 try {
                     JSONObject props = new JSONObject();
                     props.putOpt(TRACK_TYPE, TRACK_TYPE_AUTO);
