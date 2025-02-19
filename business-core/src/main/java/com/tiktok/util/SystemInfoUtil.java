@@ -21,8 +21,13 @@ import android.text.TextUtils;
 import android.webkit.WebSettings;
 import androidx.annotation.RequiresApi;
 
+import com.android.installreferrer.api.InstallReferrerClient;
+import com.android.installreferrer.api.InstallReferrerStateListener;
+import com.android.installreferrer.api.ReferrerDetails;
 import com.tiktok.BuildConfig;
 import com.tiktok.TikTokBusinessSdk;
+import com.tiktok.appevents.ReferrerInfo;
+
 import org.json.JSONObject;
 
 import java.net.Inet4Address;
@@ -30,12 +35,15 @@ import java.net.InetAddress;
 import java.net.NetworkInterface;
 import java.util.Enumeration;
 import java.util.Locale;
+import java.util.UUID;
 
 public class SystemInfoUtil {
 
     static PackageManager pm;
     static PackageInfo packageInfo;
     static Application application;
+    static String appSessionId = "";
+    static ReferrerInfo referrerInfo = null;
 
     static {
         try {
@@ -125,6 +133,71 @@ public class SystemInfoUtil {
                     .put("latency", endTimeMS-initTimeMS);
             TikTokBusinessSdk.getAppEventLogger().monitorMetric("ua_end", meta, null);
         } catch (Exception ignored) {}
+    }
+
+    public static void initAppSessionId() {
+        try {
+            appSessionId = UUID.randomUUID().toString();
+        }catch (Throwable e){
+
+        }
+    }
+
+    public static String getAppSessionId() {
+        if(TextUtils.isEmpty(appSessionId)){
+            initAppSessionId();
+        }
+        return appSessionId;
+    }
+
+    public static void initInstallReferrer() {
+        try{
+            if(referrerInfo != null){
+                return;
+            }
+            InstallReferrerClient referrerClient = InstallReferrerClient.newBuilder(TikTokBusinessSdk.getApplicationContext()).build();
+            referrerClient.startConnection(new InstallReferrerStateListener() {
+                @Override
+                public void onInstallReferrerSetupFinished(int responseCode) {
+                    try {
+                        switch (responseCode) {
+                            case InstallReferrerClient.InstallReferrerResponse.OK:
+                                try {
+                                    ReferrerDetails response = referrerClient.getInstallReferrer();
+                                    String referrerUrl = response.getInstallReferrer();
+                                    long referrerClickTime = response.getReferrerClickTimestampSeconds();
+                                    long appInstallTime = response.getInstallBeginTimestampSeconds();
+                                    referrerInfo = new ReferrerInfo(referrerUrl, appInstallTime, referrerClickTime);
+                                } catch (Throwable e) {
+
+                                }
+                                break;
+                            case InstallReferrerClient.InstallReferrerResponse.FEATURE_NOT_SUPPORTED:
+                                break;
+                            case InstallReferrerClient.InstallReferrerResponse.SERVICE_UNAVAILABLE:
+                                break;
+                        }
+                        referrerClient.endConnection();
+                    }catch (Throwable throwable){
+
+                    }
+                }
+
+                @Override
+                public void onInstallReferrerServiceDisconnected() {
+
+                }
+            });
+        }catch (Throwable throwable){
+
+        }
+    }
+
+    public static ReferrerInfo getInstallReferrer() {
+        if(referrerInfo == null){
+            initInstallReferrer();
+        }
+        return referrerInfo;
     }
 
     public static String getUserAgent() {

@@ -413,6 +413,12 @@
                 android:layout_height="wrap_content"
                 android:padding="5dp"
                 android:text="@string/start_tracker" />
+            <Button
+                android:id="@+id/ddl"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:padding="5dp"
+                android:text="@string/ddl" />
         </LinearLayout>
     </RelativeLayout>
 

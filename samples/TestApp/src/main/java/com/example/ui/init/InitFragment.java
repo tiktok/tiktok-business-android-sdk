@@ -6,10 +6,13 @@
 
 package com.example.ui.init;
 
+import android.content.Intent;
+import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
+import android.text.TextUtils;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -28,6 +31,7 @@ import androidx.lifecycle.ViewModelProvider;
 import com.example.R;
 import com.example.ui.home.HomeViewModel;
 import com.tiktok.TikTokBusinessSdk;
+import com.tiktok.appevents.ErrorData;
 
 public class InitFragment extends Fragment {
 
@@ -36,6 +40,7 @@ public class InitFragment extends Fragment {
     private EditText ttAppId;
     private Button init;
     private Button startTrack;
+    private Button ddl;
     @RequiresApi(api = Build.VERSION_CODES.KITKAT)
     public View onCreateView(@NonNull LayoutInflater inflater,
                              ViewGroup container, Bundle savedInstanceState) {
@@ -45,6 +50,7 @@ public class InitFragment extends Fragment {
         appId = root.findViewById(R.id.app_id);
         ttAppId = root.findViewById(R.id.tt_app_id);
         init = root.findViewById(R.id.init);
+        ddl = root.findViewById(R.id.ddl);
         startTrack = root.findViewById(R.id.startTrack);
         ((Switch)(root.findViewById(R.id.autostart_status))).setChecked(InitViewModel.autoStart);
         ((Switch)(root.findViewById(R.id.auto_events_status))).setChecked(InitViewModel.autoEvent);
@@ -86,6 +92,7 @@ public class InitFragment extends Fragment {
                 }catch (Throwable throwable){
                     throwable.printStackTrace();
                 }finally {
+                    logLevel = TikTokBusinessSdk.LogLevel.NONE;
                     ttConfig.setLogLevel(logLevel);
                 }
                 try{
@@ -175,7 +182,20 @@ public class InitFragment extends Fragment {
                         @Override
                         public void success() {
                             WebSettings.getDefaultUserAgent(TikTokBusinessSdk.getApplicationContext());
-                            TikTokBusinessSdk.trackEvent("test");
+                            TikTokBusinessSdk.fetchDeferredDeeplinkWithCompletion(new TikTokBusinessSdk.FetchDeferredDeeplinkCompletion() {
+                                @Override
+                                public void completion(String deepLinkUrl, ErrorData errorData) {
+                                    if(TextUtils.isEmpty(deepLinkUrl)){
+                                        Log.e("DeferredDeeplink","fetch error code:" + errorData.getCode() + " msg:"+ errorData.getMsg());
+                                    }else {
+                                        Log.e("DeferredDeeplink","deepLinkUrl is" + deepLinkUrl);
+                                        Uri uri = Uri.parse(deepLinkUrl);
+                                        Intent intent = new Intent(Intent.ACTION_VIEW);
+                                        intent.setData(uri);
+                                        getActivity().startActivity(intent);
+                                    }
+                                }
+                            });
                         }
 
                         @Override
@@ -203,6 +223,25 @@ public class InitFragment extends Fragment {
             @Override
             public void onClick(View v) {
                 TikTokBusinessSdk.startTrack();
+            }
+        });
+        ddl.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                TikTokBusinessSdk.fetchDeferredDeeplinkWithCompletion(new TikTokBusinessSdk.FetchDeferredDeeplinkCompletion() {
+                    @Override
+                    public void completion(String deepLinkUrl, ErrorData errorData) {
+                        if(TextUtils.isEmpty(deepLinkUrl)){
+                            Log.e("DeferredDeeplink","fetch error code:" + errorData.getCode() + " msg:"+ errorData.getMsg());
+                        }else {
+                            Log.e("DeferredDeeplink","deepLinkUrl is" + deepLinkUrl);
+                            Uri uri = Uri.parse(deepLinkUrl);
+                            Intent intent = new Intent(Intent.ACTION_VIEW);
+                            intent.setData(uri);
+                            getActivity().startActivity(intent);
+                        }
+                    }
+                });
             }
         });
         return root;

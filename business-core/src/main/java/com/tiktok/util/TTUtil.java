@@ -9,6 +9,7 @@ package com.tiktok.util;
 import android.content.Context;
 import android.net.Uri;
 import android.os.Looper;
+import android.text.TextUtils;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -69,24 +70,13 @@ public class TTUtil {
     public static String getOrGenAnoId(Context context, boolean forceGenerate) {
         TTKeyValueStore store = new TTKeyValueStore(context);
         String anoId = store.get(TTSDK_APP_ANONYMOUS_ID);
-        if (anoId == null || forceGenerate) {
+        if (TextUtils.isEmpty(anoId) || forceGenerate) {
             // TODO make sure anoId universally unique, also limit the length.
             anoId = UUID.randomUUID().toString();
             store.set(TTSDK_APP_ANONYMOUS_ID, anoId);
             logger.info("AnonymousId reset to " + anoId);
         }
         return anoId;
-    }
-
-    public static String mapToString(String url, Map<String, Object> map) {
-        if (map.isEmpty()) {
-            return url;
-        }
-        Uri.Builder build = Uri.parse(url).buildUpon();
-        for (Map.Entry<String, Object> entry : map.entrySet()) {
-            build.appendQueryParameter(entry.getKey(), entry.getValue().toString());
-        }
-        return build.toString();
     }
 
     public static JSONObject getMetaWithTS(@Nullable Long ts) {

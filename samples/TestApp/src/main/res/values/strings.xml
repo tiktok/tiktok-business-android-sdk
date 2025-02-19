@@ -16,6 +16,7 @@
     <string name="app_crash">crash</string>
     <string name="init">init</string>
     <string name="start_tracker">startTrack</string>
+    <string name="ddl">Fetch Deferred Deeplink </string>
     <string name="number_of_events">Number of events</string>
     <string name="send_random_events">send random events</string>
     <string name="events_prop">events prop json</string>

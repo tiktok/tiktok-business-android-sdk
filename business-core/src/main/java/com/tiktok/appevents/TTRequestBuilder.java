@@ -18,11 +18,13 @@ import androidx.annotation.Nullable;
 import com.tiktok.TikTokBusinessSdk;
 import com.tiktok.util.SystemInfoUtil;
 import com.tiktok.util.TTUtil;
+import com.tiktok.util.TimeUtil;
 
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.util.Date;
 import java.util.Locale;
 
 class TTRequestBuilder {
@@ -30,22 +32,34 @@ class TTRequestBuilder {
 
     private static JSONObject basePayloadCache = null;
     private static JSONObject healthBasePayloadCache = null;
+    private static boolean containTestCode = false;
 
     public static JSONObject getBasePayload() {
         TTUtil.checkThread(TAG);
-        if (basePayloadCache != null) {
-            return basePayloadCache;
-        }
-        JSONObject result = new JSONObject();
-
+        boolean isDebugMode = TikTokBusinessSdk.isInSdkDebugMode() || TikTokBusinessSdk.isEnableDebugMode();
+        JSONObject result;
         try {
+            if (basePayloadCache != null) {
+                if(isDebugMode != containTestCode){
+                    if (isDebugMode) {
+                        basePayloadCache.put("test_event_code", String.valueOf(TikTokBusinessSdk.getTTAppId()));
+                        containTestCode = true;
+                    }else {
+                        basePayloadCache.remove("test_event_code");
+                        containTestCode = false;
+                    }
+                }
+                return basePayloadCache;
+            }
+            result = new JSONObject();
             if (TikTokBusinessSdk.onlyAppIdProvided()) {// to be compatible with the old versions
                 result.put("app_id", TikTokBusinessSdk.getAppId());
             } else {
                 result.put("tiktok_app_id", TikTokBusinessSdk.getFirstTTAppIds());
             }
-            if (TikTokBusinessSdk.isInSdkDebugMode()) {
+            if (isDebugMode) {
                 result.put("test_event_code", String.valueOf(TikTokBusinessSdk.getTTAppId()));
+                containTestCode = true;
             }
             result.put("event_source", "APP_EVENTS_SDK");
         } catch (Exception e) {
@@ -79,9 +93,32 @@ class TTRequestBuilder {
                     .put("success", adIdInfo.getAdId() != null && adIdInfo.getAdId() != "");
             TikTokBusinessSdk.getAppEventLogger().monitorMetric("did_end", meta, null);
         } catch (Exception ignored) {}
-        contextForApiCache = contextBuilder(adIdInfo);
+        contextForApiCache = contextBuilderWithLocalAndLibrary(adIdInfo);
         freshOsVersion(contextForApiCache, event);
         return contextForApiCache;
+    }
+
+    public static JSONObject ddlJson() {
+        try {
+            JSONObject requestBody = new JSONObject();
+            TTIdentifierFactory.AdIdInfo adIdInfo = null;
+            if (TikTokBusinessSdk.isGaidCollectionEnabled()) {
+                adIdInfo = TTIdentifierFactory.getGoogleAdIdInfo(TikTokBusinessSdk.getApplicationContext());
+            }
+            JSONObject jsonObject = contextBuilder(adIdInfo, true);
+            jsonObject.put("user", TTUserInfo.sharedInstance.toJsonObject());
+            requestBody.put("tiktok_app_id", TikTokBusinessSdk.getTTAppId());
+            requestBody.put("context", jsonObject);
+            requestBody.put("timestamp", TimeUtil.getISO8601Timestamp(new Date(System.currentTimeMillis())));
+            requestBody.put("ip", SystemInfoUtil.getLocalIpAddress());
+            String userAgent = SystemInfoUtil.getUserAgent();
+            if (userAgent != null) {
+                requestBody.put("user_agent", userAgent);
+            }
+            return requestBody;
+        } catch (JSONException e) {
+            return null;
+        }
     }
 
     private static void freshOsVersion(JSONObject contextForApiCache, TTAppEvent event) {
@@ -168,7 +205,17 @@ class TTRequestBuilder {
         return bcp47Tag.toString();
     }
 
-    private static JSONObject contextBuilder(@Nullable TTIdentifierFactory.AdIdInfo adIdInfo) throws JSONException {
+    private static JSONObject contextBuilderWithLocalAndLibrary(@Nullable TTIdentifierFactory.AdIdInfo adIdInfo) throws JSONException {
+        JSONObject jsonObject =  contextBuilder(adIdInfo, false);
+        jsonObject.put("locale", getBcp47Language());
+        JSONObject library = new JSONObject();
+        library.put("name", "tiktok/" + LIBRARY_NAME);
+        library.put("version", SystemInfoUtil.getSDKVersion());
+        jsonObject.put("library", library);
+        return jsonObject;
+    }
+
+    private static JSONObject contextBuilder(@Nullable TTIdentifierFactory.AdIdInfo adIdInfo, boolean isDDL) throws JSONException {
         JSONObject app = new JSONObject();
         if (TikTokBusinessSdk.bothIdsProvided()) {
             app.put("id", TikTokBusinessSdk.getAppId());
@@ -180,20 +227,25 @@ class TTRequestBuilder {
 
         JSONObject device = new JSONObject();
         device.put("platform", "Android");
+        device.put("os_version", SystemInfoUtil.getAndroidVersion());
         if (adIdInfo != null) {
             device.put("gaid", adIdInfo.getAdId());
         }
 
-        JSONObject library = new JSONObject();
-        library.put("name", "tiktok/" + LIBRARY_NAME);
-        library.put("version", SystemInfoUtil.getSDKVersion());
-
         JSONObject context = new JSONObject();
         app.put("tiktok_app_id", TikTokBusinessSdk.getTTAppId());
+        app.put("app_session_id", SystemInfoUtil.getAppSessionId());
+        app.put("anonymous_id", TTUserInfo.sharedInstance.anonymousId);;
         context.put("app", app);
-        context.put("library", library);
         context.put("device", device);
-        context.put("locale", getBcp47Language());
+        if(SystemInfoUtil.getInstallReferrer() != null){
+            JSONObject ad = new JSONObject();
+            ad.put("gp_referrer", SystemInfoUtil.getInstallReferrer().getGoogleInstallReferrer());
+            context.put("ad", ad);
+        }
+        if(isDDL){
+            return context;
+        }
         context.put("ip", SystemInfoUtil.getLocalIpAddress());
 
         String userAgent = SystemInfoUtil.getUserAgent();
