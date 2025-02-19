@@ -48,6 +48,7 @@ dependencies {
     implementation 'androidx.lifecycle:lifecycle-common-java8:2.3.1'
     implementation 'commons-codec:commons-codec:1.11'
     compileOnly('com.android.billingclient:billing:6.0.0')
+    compileOnly('com.android.installreferrer:installreferrer:2.2')
 
     testImplementation 'junit:junit:4.13.2'
 

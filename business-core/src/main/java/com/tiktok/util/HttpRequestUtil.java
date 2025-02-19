@@ -14,6 +14,7 @@ import com.tiktok.appevents.TTCrashHandler;
 import org.json.JSONObject;
 
 import java.io.BufferedReader;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -21,6 +22,7 @@ import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.Map;
+import java.util.zip.GZIPOutputStream;
 
 import javax.net.ssl.HttpsURLConnection;
 
@@ -48,13 +50,6 @@ public class HttpRequestUtil {
 
     private static final TTLogger ttLogger = new TTLogger(TAG, TikTokBusinessSdk.getLogLevel());
 
-    public static String doGet(String url, Map<String, String> headerParamMap) {
-        HttpRequestOptions options = new HttpRequestOptions();
-        options.connectTimeout = 2000;
-        options.readTimeout = 5000;
-        return doGet(url, headerParamMap, options);
-    }
-
     public static HttpsURLConnection connect(String url, Map<String, String> headerParamMap, HttpRequestOptions options, String method, String contentLength) {
         HttpsURLConnection connection = null;
 
@@ -75,6 +70,7 @@ public class HttpRequestUtil {
             for (Map.Entry<String, String> entry : headerParamMap.entrySet()) {
                 connection.setRequestProperty(entry.getKey(), entry.getValue());
             }
+            connection.setRequestProperty("Content-Encoding","gzip");
 
             connection.connect();
         } catch (Exception e) {
@@ -161,14 +157,18 @@ public class HttpRequestUtil {
         return result;
     }
 
-    public static String doPost(String url, Map<String, String> headerParamMap, String jsonStr) {
+    public static String doPost(String url, Map<String, String> headerParamMap, String jsonStr, boolean needSignature) {
         HttpRequestOptions options = new HttpRequestOptions();
         options.connectTimeout = 2000;
         options.readTimeout = 5000;
-        return doPost(url, headerParamMap, jsonStr, options);
+        return doPost(url, headerParamMap, jsonStr, options, needSignature);
     }
 
-    public static String doPost(String url, Map<String, String> headerParamMap, String jsonStr, HttpRequestOptions options) {
+    public static String doPost(String url, Map<String, String> headerParamMap, String jsonStr) {
+        return doPost(url, headerParamMap, jsonStr, true);
+    }
+
+    public static String doPost(String url, Map<String, String> headerParamMap, String jsonStr, HttpRequestOptions options, boolean needSignature) {
         long initTimeMS = System.currentTimeMillis();
         String result = null;
         int responseCode = 0;
@@ -185,7 +185,13 @@ public class HttpRequestUtil {
         OutputStream outputStream = null;
 
         try {
-            byte[] writeBytes = jsonStr.getBytes("UTF-8");
+            if(needSignature){
+                String securityKey = DecryptUtil.encryptWithHmac(jsonStr);
+                headerParamMap.put("X-TT-Signature", securityKey);
+            }else {
+                headerParamMap.remove("X-TT-Signature");
+            }
+            byte[] writeBytes = compress2Gzip(jsonStr);
             String contentLength = String.valueOf(writeBytes.length);
 
             connection = connect(url, headerParamMap, options, "POST", contentLength);
@@ -212,14 +218,14 @@ public class HttpRequestUtil {
                 ttLogger.info("doPost request body: %s", jsonStr);
                 ttLogger.info("doPost result: %s", result == null ? String.valueOf(responseCode) : result);
             }
-        } catch (Exception e) {
+        } catch (Throwable e) {
             message = e.getMessage();
             TTCrashHandler.handleCrash(TAG, e, TTSDK_EXCEPTION_NET_ERROR);
         } finally {
             if (outputStream != null) {
                 try {
                     outputStream.close();
-                } catch (IOException e) {
+                } catch (Throwable e) {
                     message = e.getMessage();
                     TTCrashHandler.handleCrash(TAG, e, TTSDK_EXCEPTION_NET_ERROR);
                 }
@@ -227,7 +233,7 @@ public class HttpRequestUtil {
             if (connection != null) {
                 try {
                     connection.disconnect();
-                } catch (Exception e){
+                } catch (Throwable e){
                     message = e.getMessage();
                     TTCrashHandler.handleCrash(TAG, e, TTSDK_EXCEPTION_NET_ERROR);
                 }
@@ -251,8 +257,41 @@ public class HttpRequestUtil {
                         .put("log_id", getLogIDFromApi(result));
                 TikTokBusinessSdk.getAppEventLogger().monitorMetric(API_ERR, meta, null);
             }
-        } catch (Exception ignored) {}
+        } catch (Throwable ignored) {}
         return result;
+    }
+
+    private static byte[] compress2Gzip(String requestBody) {
+        if (null == requestBody || requestBody.length() == 0) {
+            return null;
+        }
+        ByteArrayOutputStream outputStream = null;
+        GZIPOutputStream gzipOutputStream = null;
+        byte[] bytes = new byte[]{};
+        try {
+            outputStream = new ByteArrayOutputStream();
+            gzipOutputStream = new GZIPOutputStream(outputStream);
+            gzipOutputStream.write(requestBody.getBytes("utf-8"));
+        } catch (IOException e) {
+            ttLogger.error(e, e.toString());
+        } finally {
+            if (gzipOutputStream != null){
+                try {
+                    gzipOutputStream.close();
+                } catch (IOException e) {
+                    ttLogger.error(e, e.toString());
+                }
+            }
+            if (outputStream != null){
+                bytes = outputStream.toByteArray();
+                try {
+                    outputStream.close();
+                } catch (IOException e) {
+                    ttLogger.error(e, e.toString());
+                }
+            }
+        }
+        return bytes;
     }
 
     private static String streamToString(InputStream is) {

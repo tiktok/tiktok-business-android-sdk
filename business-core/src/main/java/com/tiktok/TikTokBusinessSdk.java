@@ -6,6 +6,8 @@
 
 package com.tiktok;
 
+import static com.tiktok.appevents.ErrorData.TT_DDL_CODE_NOT_INIT;
+import static com.tiktok.appevents.ErrorData.TT_DDL_MSG_NOT_INIT;
 import static com.tiktok.util.TTConst.TTSDK_EXCEPTION_CRASH;
 
 import android.app.Application;
@@ -46,6 +48,8 @@ public class TikTokBusinessSdk {
     static TTAppEventLogger appEventLogger;
 
     private static final AtomicBoolean globalConfigFetched = new AtomicBoolean(false);
+
+    private static final AtomicBoolean enableDebugMode = new AtomicBoolean(false);
 
     /**
      * We provide a global switch in order that you can turn off our sdk remotely
@@ -122,6 +126,9 @@ public class TikTokBusinessSdk {
             ttConfig.ttAppIds = new String[]{""};
             ttConfig.ttFirstAppId = new BigInteger("0");
             logger.warn("Invalid TikTok App Id!");
+        }
+        if (ttConfig.accessToken != null) {
+            ttConfig.accessToken = ttConfig.accessToken.trim();
         }
         logger.info("appId: %s, TTAppId: %s, autoIapTrack: %s", ttConfig.appId, ttConfig.ttAppId, ttConfig.autoIapTrack);
         config = ttConfig;
@@ -211,6 +218,23 @@ public class TikTokBusinessSdk {
             networkSwitch.set(true);
             appEventLogger.forceFlush();
         }
+    }
+
+    /**
+     * appKey getter
+     */
+    public static String getAccessToken() {
+        return config.accessToken;
+    }
+
+    public static void updateAccessToken(String accessToken) {
+        if (!TikTokBusinessSdk.isInitialized()) {
+            return;
+        }
+        if (TextUtils.isEmpty(accessToken)) {
+            return;
+        }
+        TikTokBusinessSdk.config.accessToken = accessToken.trim();
     }
 
     public static void destroy() {
@@ -561,6 +585,18 @@ public class TikTokBusinessSdk {
         globalConfigFetched.set(true);
     }
 
+    public static Boolean isEnableDebugMode() {
+        return enableDebugMode.get();
+    }
+
+    public static void enableDebugMode() {
+        enableDebugMode.set(true);
+    }
+
+    public static void disableDebugMode() {
+        enableDebugMode.set(false);
+    }
+
     public static Boolean isInSdkDebugMode() {
         return sdkDebugModeSwitch.get();
     }
@@ -672,6 +708,10 @@ public class TikTokBusinessSdk {
         void fail(int code, String msg);
     }
 
+    public interface FetchDeferredDeeplinkCompletion {
+        void completion(String deepLinkUrl, ErrorData errorData);
+    }
+
     /**
      * To get config and permissions from the app
      * All config items can be set by declaring <meta-data> in AndroidManifest.xml,
@@ -689,8 +729,6 @@ public class TikTokBusinessSdk {
         private BigInteger ttFirstAppId=new BigInteger("0");
         /* flush time interval in seconds, default 15, 0 -> disabled */
         private int flushTime = 15;
-//        /* Access-Token for api calls */
-//        private String accessToken;
         /* to enable logs */
         private LogLevel logLevel = LogLevel.NONE;
         /* to enable auto event tracking */
@@ -710,16 +748,30 @@ public class TikTokBusinessSdk {
 
         private boolean autoIapTrack = false;
 
+        /* Access-Token for api calls */
+        private String accessToken;
+
 
         /**
          * Read configs from <meta-data>
          *
          * @param context
          */
+        @Deprecated
         public TTConfig(Context context) {
             if (context == null) throw new IllegalArgumentException("Context must not be null");
             application = (Application) context.getApplicationContext();
             disabledEvents = new ArrayList<>();
+        }
+
+        /**
+         * set context and access token
+         *
+         * @param context
+         */
+        public TTConfig(Context context, String accessToken) {
+            this(context);
+            this.accessToken = accessToken;
         }
 
         /**
@@ -870,6 +922,20 @@ public class TikTokBusinessSdk {
 
     public interface CrashListener {
         void onCrash(Thread thread, Throwable ex);
+    }
+
+    public static void fetchDeferredDeeplinkWithCompletion(FetchDeferredDeeplinkCompletion callback) {
+        try {
+            if(callback == null){
+                return;
+            }
+            if(appEventLogger == null || !TikTokBusinessSdk.isSystemActivated()){
+                callback.completion(null, new ErrorData(TT_DDL_CODE_NOT_INIT, TT_DDL_MSG_NOT_INIT));
+            }
+            appEventLogger.fetchDeferredDeeplinkWithCompletion(callback);
+        }catch (Throwable e){
+
+        }
     }
 
     public static void setOnCrashListener(CrashListener crashListener) {

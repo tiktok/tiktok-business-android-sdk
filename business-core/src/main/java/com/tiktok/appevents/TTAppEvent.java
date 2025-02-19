@@ -6,9 +6,15 @@
 
 package com.tiktok.appevents;
 
+import android.graphics.Bitmap;
+import android.graphics.Canvas;
+import android.util.Base64;
+import android.view.View;
+
 import com.tiktok.TikTokBusinessSdk;
 import com.tiktok.util.TTLogger;
 
+import java.io.ByteArrayOutputStream;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Date;
@@ -32,6 +38,7 @@ public class TTAppEvent implements Serializable {
     private static AtomicLong counter = new AtomicLong(new Date().getTime() + 0L);
     private Long uniqueId;
     private TTUserInfo userInfo;
+    private String screenShot;
     private static String TAG = TTAppEventsQueue.class.getCanonicalName();
     private static TTLogger logger = new TTLogger(TAG, TikTokBusinessSdk.getLogLevel());
 
@@ -104,6 +111,24 @@ public class TTAppEvent implements Serializable {
 
     public void setTiktokAppIds(List<String> tiktokAppIds) {
         this.tiktokAppIds = tiktokAppIds;
+    }
+
+    public String getScreenShot() {
+        return screenShot;
+    }
+
+    public void setScreenShot() {
+        try {
+            View view = TTLifecycleListener.getActivityRef().get().getWindow().getDecorView();
+            Bitmap bitmap = Bitmap.createBitmap(view.getWidth(), view.getHeight(), Bitmap.Config.RGB_565);
+            Canvas canvas = new Canvas(bitmap);
+            view.draw(canvas);
+            ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+            bitmap.compress(Bitmap.CompressFormat.JPEG, 5, outputStream);
+            this.screenShot = Base64.encodeToString(outputStream.toByteArray(), Base64.NO_WRAP);
+        } catch (Throwable e) {
+            logger.error(e, "taker screen shot error");
+        }
     }
 
     @Override
