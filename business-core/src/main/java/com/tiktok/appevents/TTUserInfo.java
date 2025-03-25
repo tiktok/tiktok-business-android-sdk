@@ -38,7 +38,7 @@ public class TTUserInfo implements Cloneable, Serializable {
         sharedInstance.isIdentified = false;
     }
 
-    private String toSha256(String str) {
+    public static String toSha256(String str) {
         if (str == null) {
             return null;
         }
@@ -83,7 +83,6 @@ public class TTUserInfo implements Cloneable, Serializable {
     public JSONObject toJsonObject() {
         JSONObject jsonObject = new JSONObject();
         try {
-            jsonObject.put("anonymous_id", anonymousId);
             if (externalId != null) {
                 jsonObject.put("external_id", externalId);
             }

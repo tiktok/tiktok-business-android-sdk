@@ -20,6 +20,8 @@ import java.util.Locale;
 import static com.tiktok.appevents.TTAppEventLogger.autoTrackRetentionEnable;
 import static com.tiktok.util.TTConst.*;
 
+import android.text.TextUtils;
+
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -94,7 +96,9 @@ class TTAutoEventsManager {
         if (is2DayLogged != null) return;
 
         String firstInstall = store.get(TTSDK_APP_FIRST_INSTALL);
-        if (firstInstall == null) return;// should not happen
+        if (TextUtils.isEmpty(firstInstall)) {
+            return;// should not happen
+         }
 
         try {
             Date firstLaunchTime = timeFormat.parse(firstInstall);

@@ -67,27 +67,43 @@ class TTRequest {
         // no content-type application/json for get requests
         getHeadParamMap.put("Connection", "Keep-Alive");
         getHeadParamMap.put("User-Agent", ua);
+        getHeadParamMap.put("Content-Type", "application/json");
     }
 
-    public static JSONObject getBusinessSDKConfig(Map<String, Object> options) {
+    public static JSONObject getBusinessSDKConfig() {
         long initTimeMS = System.currentTimeMillis();
 //        TikTokBusinessSdk.getAppEventLogger().monitorMetric("config_api_start", TTUtil.getMetaWithTS(initTimeMS), null);
         logger.info("Try to fetch global configs");
-        Map<String, Object> paramsMap = new HashMap<>();
-        paramsMap.put("app_id", TikTokBusinessSdk.getAppId());
-        // the rest params are for the sake of simplicity of debugging
-        paramsMap.put("client", "android");
-        if(TikTokBusinessSdk.isInSdkDebugMode()) {
-            paramsMap.put("debug", "true");
+        JSONObject jsonObject = new JSONObject();
+        try {
+            JSONObject app = new JSONObject();
+            app.put("id", TikTokBusinessSdk.getAppId());
+            app.put("tiktok_app_id", TikTokBusinessSdk.getTTAppId());
+            app.put("version", SystemInfoUtil.getAppVersionName());
+            jsonObject.put("app", app);
+            JSONObject device = new JSONObject();
+            device.put("platform", "Android");
+            TTIdentifierFactory.AdIdInfo adIdInfo = null;
+            if (TikTokBusinessSdk.isGaidCollectionEnabled()) {
+                adIdInfo = TTIdentifierFactory.getGoogleAdIdInfo(TikTokBusinessSdk.getApplicationContext());
+            }
+            if (adIdInfo != null) {
+                device.put("gaid", adIdInfo.getAdId());
+            }
+            device.put("version", SystemInfoUtil.getAndroidVersion());
+            jsonObject.put("device", device);
+            if(TikTokBusinessSdk.isInSdkDebugMode()) {
+                jsonObject.put("debug", "true");
+            }
+            JSONObject library = new JSONObject();
+            library.put("name", "tiktok/" + LIBRARY_NAME);
+            library.put("version", SystemInfoUtil.getSDKVersion());
+            jsonObject.put("library", library);
+        }catch (Exception exception){
+            logger.error(exception, exception.getMessage());
         }
-        paramsMap.put("sdk_version", SystemInfoUtil.getSDKVersion());
-        //  for fix bug in lower Android API edition. Maybe there is something wrong with language package, url can not be parsed successfully with some special char
-        //  paramsMap.put("app_name", SystemInfoUtil.getAppName());
-        paramsMap.put("app_version", SystemInfoUtil.getAppVersionName());
-        paramsMap.put("tiktok_app_id", TikTokBusinessSdk.getTTAppId());
-        paramsMap.putAll(options);
 
-        String url = TTUtil.mapToString("https://analytics.us.tiktok.com/api/v1/app_sdk/config", paramsMap);
+        String url = "https://analytics.us.tiktok.com/api/v1/app_sdk/config";
         logger.debug(url);
         if (TextUtils.isEmpty(TikTokBusinessSdk.getTTAppId()) || TextUtils.isEmpty(TikTokBusinessSdk.getAppId())) {
             try {
@@ -103,7 +119,7 @@ class TTRequest {
             result.optBoolean("enable_sdk", false);
             return result;
         }
-        String result = HttpRequestUtil.doGet(url, getHeadParamMap);
+        String result = HttpRequestUtil.doPost(url, getHeadParamMap, jsonObject.toString(), false);
         logger.debug(result);
         JSONObject config = null;
         if (result != null) {
@@ -294,6 +310,13 @@ class TTRequest {
                 propertiesJson.put("properties", properties);
             }
             propertiesJson.put("context", TTRequestBuilder.getContextForApi(event));
+            if(SystemInfoUtil.getInstallReferrer() != null){
+                propertiesJson.put("gp_referrer_install_ts", SystemInfoUtil.getInstallReferrer().getGpReferrerInstallTs());
+                propertiesJson.put("gp_referrer_click_ts", SystemInfoUtil.getInstallReferrer().getGpReferrerClickTs());
+            }
+            if (event.getScreenShot() != null) {
+                propertiesJson.put("screenshot", event.getScreenShot());
+            }
             return propertiesJson;
         } catch (JSONException e) {
             TTCrashHandler.handleCrash(TAG, e, TTSDK_EXCEPTION_SDK_CATCH);
@@ -324,5 +347,11 @@ class TTRequest {
     public static String reportMonitorEvent(JSONObject stat) {
         String url = "https://" + TikTokBusinessSdk.getApiTrackDomain() + "/api/v1/app_sdk/monitor";
         return HttpRequestUtil.doPost(url, headParamMap, stat.toString());
+    }
+
+    public static String fetchDeferredDeeplinkWithCompletion() {
+        JSONObject stat = TTRequestBuilder.ddlJson();
+        String url = "https://" + TikTokBusinessSdk.getApiTrackDomain() + "/api/v1/app_sdk/ddl";
+        return HttpRequestUtil.doPost(url, headParamMap, stat.toString(), false);
     }
 }
