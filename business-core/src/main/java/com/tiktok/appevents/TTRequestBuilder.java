@@ -34,6 +34,15 @@ class TTRequestBuilder {
     private static JSONObject healthBasePayloadCache = null;
     private static boolean containTestCode = false;
 
+    public static JSONObject getBasePayloadWithTs() {
+        JSONObject basePayload = getBasePayload();
+        try {
+            basePayload.put("timestamp", TimeUtil.getISO8601Timestamp(new Date()));
+        } catch (Exception e) {
+
+        }
+        return basePayload;
+    }
     public static JSONObject getBasePayload() {
         TTUtil.checkThread(TAG);
         boolean isDebugMode = TikTokBusinessSdk.isInSdkDebugMode() || TikTokBusinessSdk.isEnableDebugMode();
@@ -231,6 +240,7 @@ class TTRequestBuilder {
         if (adIdInfo != null) {
             device.put("gaid", adIdInfo.getAdId());
         }
+        addDeviceInfo(device);
 
         JSONObject context = new JSONObject();
         app.put("tiktok_app_id", TikTokBusinessSdk.getTTAppId());
@@ -264,13 +274,29 @@ class TTRequestBuilder {
         device.put("session", TikTokBusinessSdk.getSessionID());
         device.put("locale", getBcp47Language());
         device.put("ts", System.currentTimeMillis()-SystemClock.elapsedRealtime());
+        addDeviceInfo(device);
         return device;
+    }
+
+    private static void addDeviceInfo(JSONObject device){
+        try {
+            device.put("locale", getBcp47Language());
+            int[] screenInfo = SystemInfoUtil.getScreenWidthAndHeight();
+            device.put("screen_width", screenInfo[0]);
+            device.put("screen_height", screenInfo[1]);
+            device.put("model", Build.MODEL);
+            device.put("version", Build.VERSION.RELEASE);
+            device.put("scale", TikTokBusinessSdk.getApplicationContext().getResources().getDisplayMetrics().density);
+        }catch (Throwable e){
+
+        }
     }
 
     public static JSONObject getHealthMonitorBase() throws JSONException {
         if (healthBasePayloadCache != null) {
             healthBasePayloadCache.put("device",
                     enrichDeviceBase(healthBasePayloadCache.getJSONObject("device")));
+            healthBasePayloadCache.put("timestamp", TimeUtil.getISO8601Timestamp(new Date()));
             return healthBasePayloadCache;
         }
         JSONObject finalObj = new JSONObject();
@@ -281,6 +307,7 @@ class TTRequestBuilder {
         finalObj.put("device", enrichDeviceBase(getImmutableContextForApi(null).getJSONObject("device")));
         finalObj.put("log_extra", null);
         healthBasePayloadCache = finalObj;
+        healthBasePayloadCache.put("timestamp", TimeUtil.getISO8601Timestamp(new Date()));
         return healthBasePayloadCache;
     }
 }

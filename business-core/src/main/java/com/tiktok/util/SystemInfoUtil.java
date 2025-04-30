@@ -6,6 +6,8 @@
 
 package com.tiktok.util;
 
+import static com.tiktok.appevents.edp.EDPConfig.sensig_filtering_regex_list;
+import static com.tiktok.appevents.edp.EDPConfig.sensig_filtering_regex_version;
 import static com.tiktok.util.TTConst.TTSDK_EXCEPTION_SDK_CATCH;
 import static com.tiktok.util.TTConst.TTSDK_USER_AGENT;
 
@@ -17,6 +19,9 @@ import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.os.Build;
 import android.telephony.TelephonyManager;
+import android.util.DisplayMetrics;
+import android.view.Display;
+import android.view.WindowManager;
 import android.text.TextUtils;
 import android.webkit.WebSettings;
 import androidx.annotation.RequiresApi;
@@ -26,6 +31,8 @@ import com.android.installreferrer.api.InstallReferrerStateListener;
 import com.android.installreferrer.api.ReferrerDetails;
 import com.tiktok.BuildConfig;
 import com.tiktok.TikTokBusinessSdk;
+import com.tiktok.appevents.edp.Sensig;
+
 import com.tiktok.appevents.ReferrerInfo;
 
 import org.json.JSONObject;
@@ -107,7 +114,20 @@ public class SystemInfoUtil {
     }
 
     private static String userAgent = null;
+    public static void updateSensigInfo() {
+        try {
+            Sensig sensig = TTUtil.getSensigInfo(TikTokBusinessSdk.getApplicationContext());
+            if(sensig == null){
+                return;
+            }
+            if (!TextUtils.isEmpty(sensig.getRegexList())) {
+                sensig_filtering_regex_version = sensig.getVersion();
+                sensig_filtering_regex_list = sensig.getRegexList();
+            }
+        }catch (Throwable e){
 
+        }
+    }
     @RequiresApi(api = Build.VERSION_CODES.JELLY_BEAN_MR1)
     public static void initUserAgent() {
         if (userAgent != null) return;
@@ -160,24 +180,33 @@ public class SystemInfoUtil {
                 @Override
                 public void onInstallReferrerSetupFinished(int responseCode) {
                     try {
-                        switch (responseCode) {
-                            case InstallReferrerClient.InstallReferrerResponse.OK:
-                                try {
-                                    ReferrerDetails response = referrerClient.getInstallReferrer();
-                                    String referrerUrl = response.getInstallReferrer();
-                                    long referrerClickTime = response.getReferrerClickTimestampSeconds();
-                                    long appInstallTime = response.getInstallBeginTimestampSeconds();
-                                    referrerInfo = new ReferrerInfo(referrerUrl, appInstallTime, referrerClickTime);
-                                } catch (Throwable e) {
+                        TTHandlerUtil.getInstance().post(new Runnable() {
+                            @Override
+                            public void run() {
+                                try{
+                                    switch (responseCode) {
+                                        case InstallReferrerClient.InstallReferrerResponse.OK:
+                                            try {
+                                                ReferrerDetails response = referrerClient.getInstallReferrer();
+                                                String referrerUrl = response.getInstallReferrer();
+                                                long referrerClickTime = response.getReferrerClickTimestampSeconds();
+                                                long appInstallTime = response.getInstallBeginTimestampSeconds();
+                                                referrerInfo = new ReferrerInfo(referrerUrl, appInstallTime, referrerClickTime);
+                                            } catch (Throwable e) {
+
+                                            }
+                                            break;
+                                        case InstallReferrerClient.InstallReferrerResponse.FEATURE_NOT_SUPPORTED:
+                                            break;
+                                        case InstallReferrerClient.InstallReferrerResponse.SERVICE_UNAVAILABLE:
+                                            break;
+                                    }
+                                    referrerClient.endConnection();
+                                }catch (Throwable throwable){
 
                                 }
-                                break;
-                            case InstallReferrerClient.InstallReferrerResponse.FEATURE_NOT_SUPPORTED:
-                                break;
-                            case InstallReferrerClient.InstallReferrerResponse.SERVICE_UNAVAILABLE:
-                                break;
-                        }
-                        referrerClient.endConnection();
+                            }
+                        });
                     }catch (Throwable throwable){
 
                     }
@@ -252,6 +281,22 @@ public class SystemInfoUtil {
             }
         } catch (Exception ignored) {}
         return "?";
+    }
+
+    public static int[] getScreenWidthAndHeight() {
+        try {
+            WindowManager windowManager = (WindowManager) TikTokBusinessSdk.getApplicationContext().getSystemService(Context.WINDOW_SERVICE);
+            Display display = windowManager.getDefaultDisplay();
+            DisplayMetrics dm = new DisplayMetrics();
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR1) {
+                display.getRealMetrics(dm);
+            } else {
+                display.getMetrics(dm);
+            }
+            return new int[]{dm.widthPixels, dm.heightPixels};
+        } catch (Throwable e) {
+            return new int[]{0, 0};
+        }
     }
 
 }

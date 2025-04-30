@@ -11,10 +11,10 @@ import android.net.Uri;
 import android.os.Looper;
 import android.text.TextUtils;
 
-import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import com.tiktok.TikTokBusinessSdk;
 import com.tiktok.appevents.TTCrashHandler;
+import com.tiktok.appevents.edp.Sensig;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -24,6 +24,8 @@ import java.util.Map;
 import java.util.UUID;
 
 import static com.tiktok.util.TTConst.TTSDK_APP_ANONYMOUS_ID;
+import static com.tiktok.util.TTConst.TTSDK_APP_SENSIG_LIST;
+import static com.tiktok.util.TTConst.TTSDK_APP_SENSIG_VERSION;
 import static com.tiktok.util.TTConst.TTSDK_EXCEPTION_SDK_CATCH;
 
 public class TTUtil {
@@ -77,6 +79,25 @@ public class TTUtil {
             logger.info("AnonymousId reset to " + anoId);
         }
         return anoId;
+    }
+
+    public static Sensig getSensigInfo(Context context) {
+        TTKeyValueStore store = new TTKeyValueStore(context);
+        int version = store.getInt(TTSDK_APP_SENSIG_VERSION);
+        String sensigList = store.get(TTSDK_APP_SENSIG_LIST);
+        if(TextUtils.isEmpty(sensigList)){
+            return null;
+        }
+        return new Sensig(version, sensigList);
+    }
+
+    public static void setSensigInfo(Context context, Sensig sensig) {
+        if(sensig == null){
+            return;
+        }
+        TTKeyValueStore store = new TTKeyValueStore(context);
+        store.set(TTSDK_APP_SENSIG_VERSION, sensig.version);
+        store.set(TTSDK_APP_SENSIG_LIST, sensig.regexList);
     }
 
     public static JSONObject getMetaWithTS(@Nullable Long ts) {

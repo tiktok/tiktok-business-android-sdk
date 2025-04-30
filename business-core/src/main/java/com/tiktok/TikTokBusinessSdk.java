@@ -20,6 +20,7 @@ import androidx.annotation.Nullable;
 import com.tiktok.appevents.*;
 import com.tiktok.appevents.base.EventName;
 import com.tiktok.appevents.base.TTBaseEvent;
+import com.tiktok.appevents.edp.TTActivityLifecycleCallbacks;
 import com.tiktok.iap.TTInAppPurchaseWrapper;
 import com.tiktok.util.RegexUtil;
 import com.tiktok.util.TTConst;
@@ -109,6 +110,8 @@ public class TikTokBusinessSdk {
 
     private static CrashListener onCrashListener;
     public static final int INVALID_ID = -2;
+    private static TTActivityLifecycleCallbacks ttActivityLifecycleCallbacks;
+
 
     private TikTokBusinessSdk(@NonNull TTConfig ttConfig) {
         /* sdk logger & loglevel */
@@ -132,12 +135,23 @@ public class TikTokBusinessSdk {
         }
         logger.info("appId: %s, TTAppId: %s, autoIapTrack: %s", ttConfig.appId, ttConfig.ttAppId, ttConfig.autoIapTrack);
         config = ttConfig;
+        if(ttActivityLifecycleCallbacks != null){
+            ttActivityLifecycleCallbacks.registerFirstActivity();
+        }
+        registerEDPLifecycleCallback(config.application);
         networkSwitch = new AtomicBoolean(ttConfig.autoStart);
         sdkDebugModeSwitch.set(ttConfig.debugModeSwitch);
         if (sdkDebugModeSwitch.get()) {
             testEventCode = createTestEventCode(ttConfig);
         }
         sdkLDUModeSwitch.set(ttConfig.lduModeSwitch);
+    }
+
+    public static void registerEDPLifecycleCallback(Application context) {
+        if (context != null && ttActivityLifecycleCallbacks == null) {
+            ttActivityLifecycleCallbacks = new TTActivityLifecycleCallbacks();
+            context.registerActivityLifecycleCallbacks(ttActivityLifecycleCallbacks);
+        }
     }
 
     private String createTestEventCode(@NonNull TTConfig ttConfig) {
@@ -149,6 +163,10 @@ public class TikTokBusinessSdk {
 
     public static boolean isInitialized() {
         return ttSdk != null && sdkInitialized.get();
+    }
+
+    public static boolean isEdpEnable() {
+        return config != null && config.autoEDPEvent;
     }
 
     /**
@@ -186,9 +204,9 @@ public class TikTokBusinessSdk {
         appEventLogger = new TTAppEventLogger(ttConfig.autoEvent,ttConfig.disabledEvents,
                 ttConfig.flushTime, ttConfig.disableMetrics);
         appEventLogger.initConfig(initTimeMS, callback, sdkInitialized);
-        if (ttConfig.autoIapTrack) {
-            TTInAppPurchaseWrapper.registerIapTrack();
-        }
+        try{
+            TTInAppPurchaseWrapper.registerIapTrack(config.autoIapTrack);
+        }catch (Throwable ignored) {}
 
         try {
             long endTimeMS = System.currentTimeMillis();
@@ -747,6 +765,8 @@ public class TikTokBusinessSdk {
         private boolean lduModeSwitch = false;
 
         private boolean autoIapTrack = false;
+        /* to enable auto EDP event tracking */
+        private boolean autoEDPEvent = true;
 
         /* Access-Token for api calls */
         private String accessToken;
@@ -867,6 +887,19 @@ public class TikTokBusinessSdk {
          */
         public TTConfig disableMonitor() {
             disableMetrics = true;
+            return this;
+        }
+
+        /**
+         * if it is low performance device to disable Auto Enhanced Data event monitor
+         */
+        public TTConfig setIsLowPerformanceDevice(boolean isLowPerformanceDevice) {
+            autoEDPEvent = autoEDPEvent && !isLowPerformanceDevice;
+            return this;
+        }
+
+        public TTConfig disableAutoEnhancedDataPostbackEvent() {
+            autoEDPEvent = false;
             return this;
         }
 

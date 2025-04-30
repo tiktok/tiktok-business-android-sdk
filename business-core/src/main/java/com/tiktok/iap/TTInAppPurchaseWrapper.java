@@ -7,6 +7,7 @@
 package com.tiktok.iap;
 
 import static com.tiktok.TikTokBusinessSdk.getApplicationContext;
+import static com.tiktok.appevents.edp.EDPConfig.enable_pay_show_track;
 import static com.tiktok.appevents.TTAppEventLogger.autoTrackPaymentEnable;
 
 import android.content.Context;
@@ -22,6 +23,7 @@ import com.android.billingclient.api.SkuDetails;
 import com.android.billingclient.api.SkuDetailsParams;
 import com.tiktok.TikTokBusinessSdk;
 import com.tiktok.appevents.TTPurchaseInfo;
+import com.tiktok.appevents.edp.TTEDPEventTrack;
 import com.tiktok.util.TTLogger;
 
 import org.json.JSONArray;
@@ -38,14 +40,28 @@ public class TTInAppPurchaseWrapper {
 
     private static final TTLogger ttLogger = new TTLogger(TAG, TikTokBusinessSdk.getLogLevel());
 
-    public static void registerIapTrack() {
+    public static void registerIapTrack(boolean autoIapTrack) {
         try {
             if (getApplicationContext() == null) {
                 return;
             }
             mContext = getApplicationContext();
             PurchasesUpdatedListener purchaseUpdateListener = (billingResult, purchases) -> {
-
+                try {
+                    JSONArray skuInfo = new JSONArray();
+                    if(purchases != null) {
+                        for (Purchase purchase : purchases) {
+                            skuInfo.put(new JSONObject(purchase.getOriginalJson()));
+                        }
+                    }
+                    if(enable_pay_show_track) {
+                        TTEDPEventTrack.trackPayShow(billingResult.getResponseCode(), skuInfo);
+                    }
+                }catch (Throwable e) {
+                }
+                if(!autoIapTrack){
+                    return;
+                }
                 if (autoTrackPaymentEnable && billingResult != null && billingResult.getResponseCode() == BillingClient.BillingResponseCode.OK
                         && purchases != null) {
                     for (Purchase purchase : purchases) {

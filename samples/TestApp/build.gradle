@@ -9,12 +9,13 @@ apply plugin: 'com.android.application'
 android {
     compileSdkVersion 33
     buildToolsVersion "30.0.2"
+
     defaultConfig {
-        applicationId "com.tiktok.iabtest"
+        applicationId "com.tiktok.iabtesters"
         minSdkVersion 17
         targetSdkVersion 33
-        versionCode 14
-        versionName "1.14"
+        versionCode 22
+        versionName "1.22"
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
     }
@@ -40,7 +41,7 @@ dependencies {
     implementation 'androidx.lifecycle:lifecycle-process:2.4.0'
     implementation 'androidx.lifecycle:lifecycle-common-java8:2.4.0'
 
-    implementation 'com.android.billingclient:billing:6.0.0'
+    implementation 'com.android.billingclient:billing:6.0.1'
 
     implementation 'androidx.room:room-runtime:2.4.3'
     implementation 'androidx.lifecycle:lifecycle-livedata-ktx:2.4.0'

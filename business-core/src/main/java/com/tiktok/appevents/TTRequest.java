@@ -6,6 +6,7 @@
 
 package com.tiktok.appevents;
 
+import static com.tiktok.TikTokBusinessSdk.getApiTrackDomain;
 import static com.tiktok.util.TTConst.TTSDK_EXCEPTION_SDK_CATCH;
 
 import android.text.TextUtils;
@@ -98,6 +99,7 @@ class TTRequest {
             JSONObject library = new JSONObject();
             library.put("name", "tiktok/" + LIBRARY_NAME);
             library.put("version", SystemInfoUtil.getSDKVersion());
+            library.put("smart_sdk_client_flag", TikTokBusinessSdk.isEdpEnable());
             jsonObject.put("library", library);
         }catch (Exception exception){
             logger.error(exception, exception.getMessage());
@@ -161,7 +163,7 @@ class TTRequest {
      * @param appEventList
      * @return the accumulation of all failed events
      */
-    public static synchronized List<TTAppEvent> reportAppEvent(JSONObject basePayload, List<TTAppEvent> appEventList) {
+    public static synchronized List<TTAppEvent> reportAppEvent(JSONObject basePayload, List<TTAppEvent> appEventList, boolean isEdp) {
         TTUtil.checkThread(TAG);
         if (appEventList == null || appEventList.size() == 0) {
             return new ArrayList<>();
@@ -203,19 +205,17 @@ class TTRequest {
             JSONObject bodyJson = basePayload;
             try {
                 bodyJson.put("batch", new JSONArray(batch));
-            } catch (Exception e) {
-                failedEventsToBeSaved.addAll(currentBatch);
+            } catch (Throwable e) {
+                if(!isEdp) {
+                    failedEventsToBeSaved.addAll(currentBatch);
+                }
                 TTCrashHandler.handleCrash(TAG, e, TTSDK_EXCEPTION_SDK_CATCH);
                 continue;
             }
-
-            try {
-                String bodyStr = bodyJson.toString(4);
-                logger.debug("To Api:\n" + bodyStr);
-            } catch (JSONException ignored) {}
-
             String result = HttpRequestUtil.doPost(url, headParamMap, bodyJson.toString());
-
+            if(isEdp){
+                return null;
+            }
             if (result == null) {
                 failedEventsToBeSaved.addAll(currentBatch);
                 failedRequests += currentBatch.size();

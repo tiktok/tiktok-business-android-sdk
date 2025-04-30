@@ -46,7 +46,6 @@ public class TTCrashHandler {
 
     public static void retryLater(JSONObject monitor) {
         crashReport.addReport(monitor.toString(), System.currentTimeMillis(), 0);
-        if (crashReport.reports.size() >= MONITOR_BATCH_MAX) initCrashReporter();
     }
 
     public static void persistToFile() {
@@ -87,7 +86,7 @@ public class TTCrashHandler {
                     batchReq.add(new JSONObject(m.monitor));
                 } catch (Exception ignored) {}
             }
-            JSONObject req = TTRequestBuilder.getBasePayload();
+            JSONObject req = TTRequestBuilder.getBasePayloadWithTs();
             try {
                 req.put("batch", new JSONArray(batchReq));
             } catch (Exception ignored) {}
@@ -133,7 +132,7 @@ public class TTCrashHandler {
             if (stat != null) {
                 List<JSONObject> batchReq = new ArrayList<>();
                 batchReq.add(stat);
-                JSONObject req = TTRequestBuilder.getBasePayload();
+                JSONObject req = TTRequestBuilder.getBasePayloadWithTs();
                 try {
                     req.put("batch", new JSONArray(batchReq));
                 } catch (Exception ignored) {}
@@ -150,7 +149,7 @@ public class TTCrashHandler {
             os.writeObject(cr);
             os.close();
             fos.close();
-        } catch (Exception e) {
+        } catch (Throwable e) {
             // save failed, report instant if possible
             reportMonitor(cr);
         }

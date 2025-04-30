@@ -101,7 +101,7 @@ public class TTContentParams {
                 jsonObject.put("brand", brand);
             }
             if (priceAvailable && price != Float.NaN) {
-                jsonObject.put("price", Double.parseDouble(String.valueOf(price)));
+                jsonObject.put("price", String.valueOf(price));
             }
         }catch (Throwable e){
             e.printStackTrace();
