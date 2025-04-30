@@ -1,8 +1,6 @@
 package com.tiktok.util;
 
 import android.util.Base64;
-import android.util.Log;
-
 import com.tiktok.TikTokBusinessSdk;
 
 import javax.crypto.Mac;

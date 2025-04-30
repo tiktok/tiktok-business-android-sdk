@@ -19,11 +19,8 @@ import org.json.JSONObject;
 
 class TTActivityLifecycleCallbacksListener extends TTLifeCycleCallbacksAdapter {
 
-    private static final String TAG = TTActivityLifecycleCallbacksListener.class.getCanonicalName();
-    private static final TTLogger logger = new TTLogger(TAG, TikTokBusinessSdk.getLogLevel());
-
     private final TTAppEventLogger appEventLogger;
-    private boolean isPaused = false;
+    private static boolean isPaused = false;
 
     private long fgStart;
     private long bgStart = 0;
@@ -42,6 +39,7 @@ class TTActivityLifecycleCallbacksListener extends TTLifeCycleCallbacksAdapter {
             appEventLogger.restartScheduler();
             appEventLogger.autoEventsManager.track2DayRetentionEvent();
         }
+        isPaused = false;
     }
 
     @Override
@@ -83,5 +81,8 @@ class TTActivityLifecycleCallbacksListener extends TTLifeCycleCallbacksAdapter {
         } catch (Exception ignored) {}
     }
 
+    public static boolean isBackground(){
+        return isPaused;
+    }
 }
 

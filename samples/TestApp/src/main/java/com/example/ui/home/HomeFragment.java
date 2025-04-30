@@ -117,9 +117,9 @@ public class HomeFragment extends Fragment {
     private void newPurchase(boolean isInApp) {
         List<String> skuList = new ArrayList<>();
         if(isInApp){
-            skuList.add("test_iap_item_1");
+            skuList.add("iab_test_abc");
         }else {
-            skuList.add("test_sub_item_2");
+            skuList.add("iab_test_abc_sub");
         }
         SkuDetailsParams.Builder params = SkuDetailsParams.newBuilder();
         params.setSkusList(skuList).setType(isInApp?BillingClient.SkuType.INAPP:BillingClient.SkuType.SUBS);

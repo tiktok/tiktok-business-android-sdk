@@ -34,6 +34,10 @@ public class TTKeyValueStore {
         return preferences.getString(key, null);
     }
 
+    public int getInt(String key) {
+        return preferences.getInt(key, 0);
+    }
+
     /** set SharedPreferences key-value */
     public void set(String key, Object value) {
         if(preferences == null){
