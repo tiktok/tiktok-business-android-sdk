@@ -10,6 +10,8 @@ import android.annotation.SuppressLint;
 import android.os.Bundle;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.ViewGroup;
+import android.widget.TextView;
 
 import com.example.model.EventLog;
 import com.example.persistence.EventLogRepo;
@@ -55,6 +57,11 @@ public class App extends AppCompatActivity {
         NavController navController = Navigation.findNavController(this, R.id.nav_host_fragment);
         NavigationUI.setupActionBarWithNavController(this, navController, mAppBarConfiguration);
         NavigationUI.setupWithNavController(navigationView, navController);
+//        for(int i=0;i<20000;i++){
+//            TextView tv=new TextView(this);
+//            tv.setText("123");
+//            ((ViewGroup)(getWindow().getDecorView())).addView(tv);
+//        }
     }
 
     @Override

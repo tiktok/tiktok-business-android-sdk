@@ -29,8 +29,8 @@ ext {
     versionName = VERSION_NAME
 
     minSdkVersion = 17
-    targetSdkVersion = 33
-    compileSdkVersion = 33
+    targetSdkVersion = 31
+    compileSdkVersion = 30
 }
 
 task clean(type: Delete) {

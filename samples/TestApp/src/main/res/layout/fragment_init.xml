@@ -420,6 +420,10 @@
                 android:padding="5dp"
                 android:text="@string/ddl" />
         </LinearLayout>
+        <WebView
+            android:id="@+id/webview"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"/>
     </RelativeLayout>
 
 </androidx.constraintlayout.widget.ConstraintLayout>
