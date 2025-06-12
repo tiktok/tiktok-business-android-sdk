@@ -29,6 +29,7 @@ public class EDPConfig {
         String PAGE_DETAIL_UPLOAD_DEEP_COUNT = "page_detail_upload_deep_count";
         String TIME_DIFF_FREQUENCY_CONTROL = "time_diff_frequency_control";
         String REPORT_FREQUENCY_CONTROL = "report_frequency_control";
+        String ENABLE_SYNC_GET_TOUCH_POSITION = "enable_sync_get_touch_position";
         String BUTTON_BLACK_LIST = "button_black_list";
         String SENSIG_FILTERING_REGEX_LIST = "sensig_filtering_regex_list";
         String SENSIG_FILTERING_REGEX_VERSION = "sensig_filtering_regex_version";
@@ -47,6 +48,7 @@ public class EDPConfig {
     public static Set<String> button_black_list = new HashSet<>();
     public static String sensig_filtering_regex_list = DEFAULT_SENSIG_FILTERING_REGEX_LIST;
     public static int sensig_filtering_regex_version = 0;
+    public static boolean enable_sync_get_touch_info = false;
 
     public static void optConfig(JSONObject config) {
         if (config == null) {
@@ -62,6 +64,7 @@ public class EDPConfig {
             page_detail_upload_deep_count = config.optInt(ConfigConst.PAGE_DETAIL_UPLOAD_DEEP_COUNT, 0);
             time_diff_frequency_control = config.optDouble(ConfigConst.TIME_DIFF_FREQUENCY_CONTROL, 0);
             report_frequency_control = config.optDouble(ConfigConst.REPORT_FREQUENCY_CONTROL, 0.0);
+            enable_sync_get_touch_info = config.optBoolean(ConfigConst.ENABLE_SYNC_GET_TOUCH_POSITION, false);
             JSONArray buttonBlackList = config.optJSONArray(ConfigConst.BUTTON_BLACK_LIST);
             JSONArray sensigFilteringRegexList = config.optJSONArray(ConfigConst.SENSIG_FILTERING_REGEX_LIST);
             button_black_list.clear();
