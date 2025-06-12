@@ -7,6 +7,7 @@ package com.tiktok.appevents.edp;
 
 import static com.tiktok.appevents.edp.EDPConfig.button_black_list;
 import static com.tiktok.appevents.edp.EDPConfig.enable_click_track;
+import static com.tiktok.appevents.edp.EDPConfig.enable_sync_get_touch_info;
 import static com.tiktok.appevents.edp.EDPConfig.enable_webview_request_track;
 import static com.tiktok.appevents.edp.EDPConfig.page_detail_upload_deep_count;
 import static com.tiktok.appevents.edp.EDPConfig.sensig_filtering_regex_list;
@@ -109,20 +110,39 @@ public class TTHierarchyHelper {
                             }
                             isSending = true;
                             String className = v.getClass().getCanonicalName();
-                            TikTokBusinessSdk.getAppEventLogger().addToQ(new Runnable() {
-                                @Override
-                                public void run() {
-                                    try {
-                                        TTEDPEventTrack.trackClick(className, event.getRawX(), event.getRawY(), rootView.get().getMeasuredWidth(),
-                                                rootView.get().getMeasuredHeight(), rootView.get() instanceof TextView ? ((TextView) (rootView.get())).getText().toString() : "",
-                                                activity.get().getClass().getSimpleName(), TTHierarchyHelper.getViewHierarchy(new WeakReference<>(activity.get().getWindow().getDecorView()), page_detail_upload_deep_count),
-                                                getViewHierarchyCount(new WeakReference<>(activity.get().getWindow().getDecorView())),
-                                                System.currentTimeMillis() - touchDown);
-                                    } catch (Throwable e) {
+                            if (enable_sync_get_touch_info) {
+                                float rawX = event.getRawX();
+                                float rawY = event.getRawY();
+                                TikTokBusinessSdk.getAppEventLogger().addToQ(new Runnable() {
+                                    @Override
+                                    public void run() {
+                                        try {
+                                            TTEDPEventTrack.trackClick(className, rawX, rawY, rootView.get().getMeasuredWidth(),
+                                                    rootView.get().getMeasuredHeight(), rootView.get() instanceof TextView ? ((TextView) (rootView.get())).getText().toString() : "",
+                                                    activity.get().getClass().getSimpleName(), TTHierarchyHelper.getViewHierarchy(new WeakReference<>(activity.get().getWindow().getDecorView()), page_detail_upload_deep_count),
+                                                    getViewHierarchyCount(new WeakReference<>(activity.get().getWindow().getDecorView())),
+                                                    System.currentTimeMillis() - touchDown);
+                                        } catch (Throwable e) {
 
+                                        }
                                     }
-                                }
-                            });
+                                });
+                            } else {
+                                TikTokBusinessSdk.getAppEventLogger().addToQ(new Runnable() {
+                                    @Override
+                                    public void run() {
+                                        try {
+                                            TTEDPEventTrack.trackClick(className, event.getRawX(), event.getRawY(), rootView.get().getMeasuredWidth(),
+                                                    rootView.get().getMeasuredHeight(), rootView.get() instanceof TextView ? ((TextView) (rootView.get())).getText().toString() : "",
+                                                    activity.get().getClass().getSimpleName(), TTHierarchyHelper.getViewHierarchy(new WeakReference<>(activity.get().getWindow().getDecorView()), page_detail_upload_deep_count),
+                                                    getViewHierarchyCount(new WeakReference<>(activity.get().getWindow().getDecorView())),
+                                                    System.currentTimeMillis() - touchDown);
+                                        } catch (Throwable e) {
+
+                                        }
+                                    }
+                                });
+                            }
                             break;
                     }
                 }catch (Throwable e){
