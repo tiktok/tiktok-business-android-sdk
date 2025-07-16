@@ -33,7 +33,7 @@ public class TTLogger {
         if (format == null) {
             return "null";
         }
-        return extra.length == 0 ? format : String.format(format, extra);
+        return extra.length == 0 ? format : String.format("%s", format);
 
     }
 
