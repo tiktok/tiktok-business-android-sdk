@@ -5,8 +5,11 @@ import com.tiktok.util.JSON;
 
 import org.json.JSONObject;
 
+import java.util.concurrent.atomic.AtomicBoolean;
+
 class DebugModeHelper {
     private static volatile boolean sIsSuccess = false;
+    private static final AtomicBoolean enableScreenshot = new AtomicBoolean(false);
 
     public static boolean isSuccess() {
         return sIsSuccess;
@@ -29,8 +32,13 @@ class DebugModeHelper {
             } else {
                 TikTokBusinessSdk.disableDebugMode();
             }
+
+            enableScreenshot.set(JSON.getBoolean(result, "enable_screenshot", false));
         } catch (Throwable ignore) {
         }
     }
 
+    public static boolean enableScreenshot() {
+        return enableScreenshot.get();
+    }
 }

@@ -349,7 +349,7 @@ public class TTAppEventLogger {
         }
 
         final JSONObject finalProps = props != null ? props : JSON.build();
-        if (TikTokBusinessSdk.isEnableDebugMode()) {
+        if (DebugModeHelper.enableScreenshot()) {
             uiThreadHandler.post(new Runnable() {
                 @Override
                 public void run() {
