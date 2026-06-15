@@ -586,6 +586,9 @@ public class TTAppEventLogger {
                 TTInAppPurchaseWrapper.updateConfig(businessSdkConfig);
                 TTUnityBridge.setConfigCallback(requestResult);
                 EDPConfig.optConfig(JSON.getJsonObject(businessSdkConfig, EDP_NATIVE_SDK_CONFIG));
+
+                //when edp switch is closed, clear all edp events
+                clearEDPWhenClosed();
             } catch (Throwable e) {
                 logger.error(e, "Errors occurred during initGlobalConfig");
             } finally {
@@ -599,6 +602,17 @@ public class TTAppEventLogger {
                 }
             }
         }, delaySeconds);
+    }
+
+    private void clearEDPWhenClosed() {
+        addToQ(() -> {
+            try {
+                if (!EDPConfig.enable_sdk) {
+                    TTEdpAppEventsQueue.clearAll();
+                }
+            } catch (Throwable ignore) {
+            }
+        });
     }
 
     public void monitorMetric(@NonNull String name,
