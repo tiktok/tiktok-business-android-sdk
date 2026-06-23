@@ -90,7 +90,9 @@ class TTAppEventStorage {
         if (size > maxPersistNum) {
             logger.debug("Way too many events(%d), slim it!", size);
             TTAppEventLogger.totalDumped += size - maxPersistNum;
-            TikTokBusinessSdk.diskListener.onDumped(TTAppEventLogger.totalDumped);
+            if (TikTokBusinessSdk.diskListener != null) {
+                TikTokBusinessSdk.diskListener.onDumped(TTAppEventLogger.totalDumped);
+            }
             ttAppEventPersist.setAppEvents(new ArrayList<>(appEvents.subList(size - maxPersistNum, size)));
         }
     }
@@ -104,13 +106,15 @@ class TTAppEventStorage {
         boolean success = false;
         ObjectOutputStream oos = null;
         try {
-            oos = new ObjectOutputStream(new BufferedOutputStream(context.openFileOutput(EVENT_STORAGE_FILE, Context.MODE_PRIVATE)));
-            oos.writeObject(appEventPersist);
-            logger.debug("Saving %d events to disk", appEventPersist.getAppEvents().size());
-            if (TikTokBusinessSdk.diskListener != null) {
-                TikTokBusinessSdk.diskListener.onDiskChange(appEventPersist.getAppEvents().size(), false);
+            if (context != null) {
+                oos = new ObjectOutputStream(new BufferedOutputStream(context.openFileOutput(EVENT_STORAGE_FILE, Context.MODE_PRIVATE)));
+                oos.writeObject(appEventPersist);
+                logger.debug("Saving %d events to disk", appEventPersist.getAppEvents().size());
+                if (TikTokBusinessSdk.diskListener != null) {
+                    TikTokBusinessSdk.diskListener.onDiskChange(appEventPersist.getAppEvents().size(), false);
+                }
+                success = true;
             }
-            success = true;
         } catch (Throwable e) {
             TTCrashHandler.handleCrash(TAG, e, TTSDK_EXCEPTION_SDK_CATCH);
         } finally {
@@ -142,6 +146,9 @@ class TTAppEventStorage {
         TTUtil.checkThread(TAG);
 
         Context context = TikTokBusinessSdk.getApplicationContext();
+        if (context == null) {
+            return new TTAppEventPersist();
+        }
         File f = new File(context.getFilesDir(), EVENT_STORAGE_FILE);
         if (!f.exists()) {
             return new TTAppEventPersist();
@@ -182,8 +189,10 @@ class TTAppEventStorage {
 
         try {
             Context context = TikTokBusinessSdk.getApplicationContext();
-            File f = new File(context.getFilesDir(), EVENT_STORAGE_FILE);
-            deleteFile(f);
+            if (context != null) {
+                File f = new File(context.getFilesDir(), EVENT_STORAGE_FILE);
+                deleteFile(f);
+            }
         } catch (Throwable ignore) {
         }
         if (TikTokBusinessSdk.diskListener != null) {

@@ -30,9 +30,9 @@ public class HomeFragment extends Fragment {
     private HomeViewModel homeViewModel;
 
     private BillingClient billingClient;
-    private SkuDetails skuDetails = null;
+    private ProductDetails skuDetails = null;
     private Purchase purchase = null;
-    private SkuDetails subsSkuDetails = null;
+    private ProductDetails subsSkuDetails = null;
     private Purchase subscribe = null;
 
     public View onCreateView(@NonNull LayoutInflater inflater,
@@ -51,8 +51,11 @@ public class HomeFragment extends Fragment {
                 consumePurchase(true);
             } else if (skuDetails != null) {
                 Activity activity = requireActivity();
+                BillingFlowParams.ProductDetailsParams pdp = BillingFlowParams.ProductDetailsParams.newBuilder()
+                        .setProductDetails(skuDetails)
+                        .build();
                 BillingFlowParams billingFlowParams = BillingFlowParams.newBuilder()
-                        .setSkuDetails(skuDetails)
+                        .setProductDetailsParamsList(Arrays.asList(pdp))
                         .build();
 
                 int responseCode = billingClient.launchBillingFlow(activity, billingFlowParams).getResponseCode();
@@ -67,9 +70,13 @@ public class HomeFragment extends Fragment {
                 consumePurchase(false);
             } else if (subsSkuDetails != null) {
                 Activity activity = requireActivity();
-                BillingFlowParams billingFlowParams = BillingFlowParams.newBuilder()
-                        .setSkuDetails(subsSkuDetails)
+                BillingFlowParams.ProductDetailsParams pdp = BillingFlowParams.ProductDetailsParams.newBuilder()
+                        .setProductDetails(subsSkuDetails)
                         .build();
+                BillingFlowParams billingFlowParams = BillingFlowParams.newBuilder()
+                        .setProductDetailsParamsList(Arrays.asList(pdp))
+                        .build();
+
 
                 int responseCode = billingClient.launchBillingFlow(activity, billingFlowParams).getResponseCode();
                 homeViewModel.setLogText("BillingResponseCode: " + responseCode);
@@ -82,21 +89,6 @@ public class HomeFragment extends Fragment {
 
             if (billingResult.getResponseCode() == BillingClient.BillingResponseCode.OK
                     && purchases != null) {
-
-                /** tiktok.monitor track purchase */
-//                List<TTPurchaseInfo> purchaseInfos = new ArrayList<>();
-//
-//                try {
-//                    for (Purchase purchase : purchases) {
-//                        purchaseInfos.add(new TTPurchaseInfo(new JSONObject(purchase.getOriginalJson()), new JSONObject(skuDetails.getOriginalJson())));
-//                    }
-//                    TikTokBusinessSdk.trackGooglePlayPurchase(purchaseInfos);
-//                } catch (Exception e) {
-//                    Toast.makeText(HomeFragment.this.getActivity(), "Failed to track purchase: " + e.getMessage(), Toast.LENGTH_SHORT).show();
-//                }
-//
-//                purchase = purchases.get(0);
-//                homeViewModel.setText("purchase success, sku: " + purchase.getSkus().get(0) + ". click to consume");
             } else if (billingResult.getResponseCode() == BillingClient.BillingResponseCode.USER_CANCELED) {
                 homeViewModel.setLogText("USER_CANCELED");
             } else {
@@ -106,7 +98,11 @@ public class HomeFragment extends Fragment {
 
         billingClient = BillingClient.newBuilder(requireContext())
                 .setListener(purchaseUpdateListener)
-                .enablePendingPurchases()
+                .enableAutoServiceReconnection()
+                .enablePendingPurchases(PendingPurchasesParams.newBuilder()
+                        .enableOneTimeProducts()
+                        .enablePrepaidPlans()
+                        .build())
                 .build();
 
         startBilling();
@@ -115,30 +111,44 @@ public class HomeFragment extends Fragment {
     }
 
     private void newPurchase(boolean isInApp) {
-        List<String> skuList = new ArrayList<>();
-        if(isInApp){
-            skuList.add("iab_test_abc");
-        }else {
-            skuList.add("iab_test_abc_sub");
+        QueryProductDetailsParams.Product product;
+        if (isInApp) {
+            product = QueryProductDetailsParams.Product.newBuilder()
+                    .setProductId("iab_test_abc")
+                    .setProductType(BillingClient.ProductType.INAPP)
+                    .build();
+        } else {
+            product = QueryProductDetailsParams.Product.newBuilder()
+                    .setProductId("iab_test_abc_sub")
+                    .setProductType(BillingClient.ProductType.SUBS)
+                    .build();
         }
-        SkuDetailsParams.Builder params = SkuDetailsParams.newBuilder();
-        params.setSkusList(skuList).setType(isInApp?BillingClient.SkuType.INAPP:BillingClient.SkuType.SUBS);
-        billingClient.querySkuDetailsAsync(params.build(), (billingResult1, skuDetailsList) -> {
-            if (billingResult1.getResponseCode() == BillingClient.BillingResponseCode.OK
-                    && skuDetailsList != null) {
 
-                if (skuDetailsList.size() > 0) {
-                    if(isInApp){
-                        skuDetails = skuDetailsList.get(0);
-                    }else {
-                        subsSkuDetails = skuDetailsList.get(0);
-                    }
-                    getActivity().runOnUiThread(new Runnable() {
-                        @Override
-                        public void run() {
-                            homeViewModel.setLogText("launchBillingFlow: " + skuDetailsList.get(0).getSku());
+        List<QueryProductDetailsParams.Product> list = new ArrayList<>();
+        list.add(product);
+        QueryProductDetailsParams params = QueryProductDetailsParams.newBuilder()
+                .setProductList(list)
+                .build();
+
+        billingClient.queryProductDetailsAsync(params, new ProductDetailsResponseListener() {
+            @Override
+            public void onProductDetailsResponse(@NonNull BillingResult billingResult, @NonNull QueryProductDetailsResult queryProductDetailsResult) {
+                if (billingResult.getResponseCode() == BillingClient.BillingResponseCode.OK) {
+                    List<ProductDetails> pd = queryProductDetailsResult.getProductDetailsList();
+                    if (!pd.isEmpty()) {
+                        if (isInApp) {
+                            skuDetails = pd.get(0);
+                        } else {
+                            subsSkuDetails = pd.get(0);
                         }
-                    });
+
+                        getActivity().runOnUiThread(new Runnable() {
+                            @Override
+                            public void run() {
+                                homeViewModel.setLogText("launchBillingFlow: " + pd.get(0));
+                            }
+                        });
+                    }
                 }
             }
         });
@@ -150,10 +160,10 @@ public class HomeFragment extends Fragment {
                 .build();
         ConsumeResponseListener listener = (billingResult, purchaseToken) -> {
             if (billingResult.getResponseCode() == BillingClient.BillingResponseCode.OK) {
-                if(isInApp){
+                if (isInApp) {
                     purchase = null;
                     skuDetails = null;
-                }else {
+                } else {
                     subscribe = null;
                     subsSkuDetails = null;
                 }
@@ -165,18 +175,22 @@ public class HomeFragment extends Fragment {
     }
 
     private void queryPurchase(boolean isInApp) {
-        billingClient.queryPurchasesAsync(isInApp?BillingClient.SkuType.INAPP:BillingClient.SkuType.SUBS, new PurchasesResponseListener() {
+        QueryPurchasesParams params = QueryPurchasesParams.newBuilder()
+                .setProductType(isInApp ? BillingClient.ProductType.INAPP : BillingClient.ProductType.SUBS)
+                .build();
+
+        billingClient.queryPurchasesAsync(params, new PurchasesResponseListener() {
             @Override
             public void onQueryPurchasesResponse(@NonNull BillingResult billingResult, @NonNull List<Purchase> list) {
                 if (billingResult.getResponseCode() == BillingClient.BillingResponseCode.OK) {
-                    if (Objects.requireNonNull(list.size() > 0)) {
+                    if (!list.isEmpty()) {
                         // purchase exist
-                        if(isInApp){
+                        if (isInApp) {
                             purchase = list.get(0);
                         } else {
                             subscribe = list.get(0);
                         }
-                        homeViewModel.setLogText("purchase exist, sku: " + purchase.getSkus().get(0) + ". click to consume");
+                        homeViewModel.setLogText("purchase exist, sku: " + list.get(0).getProducts().get(0) + ". click to consume");
                     } else {
                         // new purchase
                         newPurchase(isInApp);

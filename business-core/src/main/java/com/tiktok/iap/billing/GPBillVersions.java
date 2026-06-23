@@ -14,17 +14,29 @@ public class GPBillVersions {
 
     public static GPBillingVer getMajorVersion() {
         try {
-            String version = getVersion();
-            if (version != null) {
-                String[] vers = version.split("\\.");
-                int major = Integer.parseInt(vers[0]);
-                if (major == 1) {
-                    return GPBillingVer.V1;
-                } else if (major > 1 && major < 5) {
-                    return GPBillingVer.V2_V4;
-                } else {
-                    return GPBillingVer.V5_V8;
-                }
+            return parseMajorVersion(getVersion());
+        } catch (Throwable ignore) {
+        }
+        return GPBillingVer.NONE;
+    }
+
+    static GPBillingVer parseMajorVersion(String version) {
+        if (version == null) {
+            return GPBillingVer.NONE;
+        }
+        try {
+            String[] vers = version.split("\\.");
+            int major = Integer.parseInt(vers[0]);
+            if (major == 1) {
+                return GPBillingVer.V1;
+            } else if (major > 1 && major < 5) {
+                return GPBillingVer.V2_V4;
+            } else if (major >= 5 && major <= 7) {
+                return GPBillingVer.V5_V7;
+            } else if (major == 8) {
+                return GPBillingVer.V8;
+            } else if (major == 9) {
+                return GPBillingVer.V9;
             }
         } catch (Throwable ignore) {
         }
@@ -79,7 +91,7 @@ public class GPBillVersions {
     }
 
     public enum GPBillingVer {
-        NONE, V1, V2_V4, V5_V8
+        NONE, V1, V2_V4, V5_V7, V8, V9
     }
 
 }

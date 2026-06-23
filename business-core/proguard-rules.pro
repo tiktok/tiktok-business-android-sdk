@@ -9,3 +9,4 @@
 }
 -keep class com.android.vending.billing.** { *; }
 -keep class com.android.billingclient.api.** { *; }
+-keep interface com.android.billingclient.api.** { *; }
