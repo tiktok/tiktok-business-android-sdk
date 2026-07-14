@@ -87,8 +87,10 @@ public class TTCrashHandler {
 
             try {
                 Context context = TikTokBusinessSdk.getApplicationContext();
-                File f = new File(context.getFilesDir(), CRASH_REPORT_FILE);
-                if (f.exists()) f.delete();
+                if (context != null) {
+                    File f = new File(context.getFilesDir(), CRASH_REPORT_FILE);
+                    if (f.exists()) f.delete();
+                }
             } catch (Throwable ignored) {
             }
 
@@ -199,9 +201,11 @@ public class TTCrashHandler {
         ObjectOutputStream os = null;
         try {
             Context context = TikTokBusinessSdk.getApplicationContext();
-            fos = context.openFileOutput(CRASH_REPORT_FILE, Context.MODE_PRIVATE);
-            os = new ObjectOutputStream(fos);
-            os.writeObject(cr);
+            if (context != null) {
+                fos = context.openFileOutput(CRASH_REPORT_FILE, Context.MODE_PRIVATE);
+                os = new ObjectOutputStream(fos);
+                os.writeObject(cr);
+            }
         } catch (Throwable e) {
             // save failed, report instant if possible
             reportMonitor(cr);

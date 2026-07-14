@@ -1,10 +1,10 @@
 package com.example;
 
-import android.app.Application;
+import androidx.multidex.MultiDexApplication;
 
 import com.tiktok.TikTokBusinessSdk;
 
-public class TTApplication extends Application {
+public class TTApplication extends MultiDexApplication {
     @Override
     public void onCreate() {
         super.onCreate();

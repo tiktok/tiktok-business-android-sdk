@@ -53,7 +53,7 @@ dependencies {
     implementation 'androidx.annotation:annotation:1.2.0'
     implementation 'androidx.lifecycle:lifecycle-process:2.3.1'
     implementation 'androidx.lifecycle:lifecycle-common-java8:2.3.1'
-    compileOnly('com.android.billingclient:billing:6.0.0')
+    compileOnly('com.android.billingclient:billing:8.0.0')
     compileOnly('com.android.installreferrer:installreferrer:2.2')
 
     testImplementation 'junit:junit:4.13.2'
