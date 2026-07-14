@@ -11,6 +11,7 @@ import static com.tiktok.util.TTConst.TRACK_TYPE_AUTO;
 
 import android.text.TextUtils;
 
+import com.tiktok.iap.billing.GPBillVersions;
 import com.tiktok.util.JSON;
 
 import org.json.JSONArray;
@@ -37,6 +38,7 @@ class TTInAppPurchaseManager {
             JSONObject original = JSON.build();
             JSON.putObject(original, "purchase", purchaseInfo.getPurchase());
             JSON.putObject(original, "sku", purchaseInfo.getSkuDetails());
+            JSON.putObject(original, "gp_ver", GPBillVersions.getVersion());
             JSON.putObject(properties, "original_json", original);
 
             //contents
