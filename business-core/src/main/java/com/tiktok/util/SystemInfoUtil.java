@@ -369,6 +369,9 @@ public class SystemInfoUtil {
     private static boolean sIsUnity = false;
     private static String sLibraryName = "";
 
+    private static boolean sHasGetRN = false;
+    private static boolean sIsRN = false;
+
     public static boolean isUnity() {
         if (!sHasGetUnity) {
             try {
@@ -383,10 +386,26 @@ public class SystemInfoUtil {
         return sIsUnity;
     }
 
+    public static boolean isRN() {
+        if (!sHasGetRN) {
+            try {
+                Class.forName("com.tiktokbusinessreactnativesdk.TiktokBusinessReactNativeSdkModule");
+                sIsRN = true;
+            } catch (Throwable ignore) {
+                sIsRN = false;
+            }
+            sHasGetRN = true;
+        }
+        return sIsRN;
+    }
+
+
     public static String getLibraryName() {
         if (TextUtils.isEmpty(sLibraryName)) {
             if (isUnity()) {
                 sLibraryName = "tiktok-business-unity-android-sdk";
+            } else if (isRN()) {
+                sLibraryName = "tiktok-business-rn-android-sdk";
             } else {
                 sLibraryName = "tiktok-business-android-sdk";
             }
