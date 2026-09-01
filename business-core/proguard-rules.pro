@@ -1,5 +1,6 @@
 -keep class com.tiktok.** { *; }
 -dontwarn com.tiktok.**
+-keep class com.tiktokbusinessreactnativesdk.** { *; }
 -keep class com.google.android.gms.ads.identifier.AdvertisingIdClient {
     com.google.android.gms.ads.identifier.AdvertisingIdClient$Info getAdvertisingIdInfo(android.content.Context);
 }
