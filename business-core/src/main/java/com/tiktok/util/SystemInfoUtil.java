@@ -209,6 +209,9 @@ public class SystemInfoUtil {
 
     public static void initInstallReferrer() {
         try {
+            if (!TikTokBusinessSdk.isSdkEnabled()) {
+                return;
+            }
             if (sReferrerInfo != null) {
                 return;
             }

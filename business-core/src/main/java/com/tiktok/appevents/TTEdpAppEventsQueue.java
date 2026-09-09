@@ -32,6 +32,9 @@ class TTEdpAppEventsQueue {
     }
 
     public static synchronized void addEvent(TTAppEvent event) {
+        if (TikTokBusinessSdk.shouldDiscardEvents()) {
+            return;
+        }
         TTUtil.checkThread(TAG);
         memory.add(event);
         notifyChange();

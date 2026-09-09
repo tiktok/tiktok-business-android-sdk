@@ -63,12 +63,18 @@ public class TikTokBusinessSdk {
     private static final AtomicBoolean enableDebugMode = new AtomicBoolean(false);
 
     /**
-     * We provide a global switch in order that you can turn off our sdk remotely
-     * This is a final rescue in case our sdk is causing constant crashes in you app.
+     * The app-controlled switch, only changed by {@link #setSdkGlobalSwitch(Boolean)}.
      * If the switch is off, the events will neither be saved to the memory nor on the disk,
      * our sdk simply ignores all the track or flush requests.
      */
     private static Boolean sdkGlobalSwitch = true;
+    /**
+     * The remote kill switch, the last "enable_sdk" value returned by the global config.
+     * We provide it in order that we can turn the sdk off remotely, a final rescue in case the
+     * sdk is causing constant crashes in an app. It is stored apart from {@link #sdkGlobalSwitch}
+     * so that fetching the config never overwrites what the app set, see {@link #isSdkEnabled()}.
+     */
+    private static Boolean remoteSdkSwitch = true;
     /**
      * api available version
      */
@@ -272,15 +278,63 @@ public class TikTokBusinessSdk {
         TikTokBusinessSdk.config.accessToken = accessToken.trim();
     }
 
+    /**
+     * Stops the sdk in the current process: it unregisters the lifecycle callbacks the sdk
+     * registered, stops the flush scheduler and the internal heartbeat, and drops what is still
+     * held in memory. After it returns, a lifecycle callback can no longer refetch the global
+     * config nor restart scheduling; a later {@link #initializeSdk(TTConfig)} registers
+     * everything again.
+     * <p>
+     * Events already persisted on the disk are kept, call {@link #clearPersistedEvents()} to
+     * purge them as well.
+     */
     public static void destroy() {
+        if (appEventLogger != null) {
+            appEventLogger.destroy();
+        }
+        unregisterEDPLifecycleCallback();
         ttSdk = null;
         memoryListener = null;
         diskListener = null;
         networkListener = null;
         nextTimeFlushListener = null;
-        if (appEventLogger != null) {
-            appEventLogger.destroy();
+        sdkInitialized.set(false);
+        globalConfigFetched.set(false);
+        isActivatedLogicRun = false;
+    }
+
+    private static void unregisterEDPLifecycleCallback() {
+        try {
+            if (ttActivityLifecycleCallbacks != null && config != null && config.application != null) {
+                config.application.unregisterActivityLifecycleCallbacks(ttActivityLifecycleCallbacks);
+            }
+        } catch (Throwable ignored) {
         }
+        ttActivityLifecycleCallbacks = null;
+    }
+
+    /**
+     * Purges every event the sdk stored: the in-memory queues, the persisted event store and the
+     * pending monitor reports. It works whatever the switches are set to and whether or not
+     * {@link TTConfig#discardEventsWhileDisabled()} was used, so an app can make sure that
+     * nothing collected before a consent withdrawal is sent once the sdk is enabled again.
+     * <p>
+     * The purge is performed on the sdk event loop, so it completes shortly after the call
+     * returns. It uses the application context of the last {@link TTConfig}, which is kept
+     * across {@link #destroy()}; call {@link #clearPersistedEvents(Context)} instead to purge
+     * the store before the sdk has ever been configured in this process.
+     */
+    public static void clearPersistedEvents() {
+        clearPersistedEvents(config == null ? null : config.application);
+    }
+
+    /**
+     * see {@link #clearPersistedEvents()}
+     *
+     * @param context any context of the app whose event store must be purged
+     */
+    public static void clearPersistedEvents(Context context) {
+        TTAppEventLogger.purgeAllEvents(context == null ? null : context.getApplicationContext());
     }
 
     /**
@@ -593,8 +647,50 @@ public class TikTokBusinessSdk {
         return !onlyAppIdProvided();
     }
 
+    /**
+     * The app-controlled switch, it reflects only what the app set through
+     * {@link #setSdkGlobalSwitch(Boolean)}. The remote kill switch is reported by
+     * {@link #getRemoteSdkSwitch()} and the two are combined by {@link #isSdkEnabled()}.
+     */
     public static Boolean getSdkGlobalSwitch() {
         return sdkGlobalSwitch;
+    }
+
+    /**
+     * The effective switch every gate of the sdk reads: the sdk collects, stores and sends data
+     * only when both the app-controlled switch and the remote kill switch are on.
+     */
+    public static boolean isSdkEnabled() {
+        return Boolean.TRUE.equals(sdkGlobalSwitch) && Boolean.TRUE.equals(remoteSdkSwitch);
+    }
+
+    /**
+     * The remote kill switch, the last "enable_sdk" value returned by the global config.
+     */
+    public static Boolean getRemoteSdkSwitch() {
+        return remoteSdkSwitch;
+    }
+
+    /**
+     * Internal, called when the global config is fetched. It never changes the app-controlled
+     * switch set through {@link #setSdkGlobalSwitch(Boolean)}.
+     */
+    public static void setRemoteSdkSwitch(Boolean enableSdk) {
+        TikTokBusinessSdk.remoteSdkSwitch = enableSdk;
+    }
+
+    /**
+     * see {@link TTConfig#discardEventsWhileDisabled()}
+     */
+    public static boolean isDiscardEventsWhileDisabled() {
+        return config != null && config.discardEventsWhileDisabled;
+    }
+
+    /**
+     * true when an event created right now has to be dropped instead of being queued or persisted
+     */
+    public static boolean shouldDiscardEvents() {
+        return isDiscardEventsWhileDisabled() && !isSdkEnabled();
     }
 
     /**
@@ -607,11 +703,11 @@ public class TikTokBusinessSdk {
         if (logger == null) {
             return false;
         }
-        Boolean sdkGlobalSwitch = TikTokBusinessSdk.getSdkGlobalSwitch();
-        if (!sdkGlobalSwitch) {
+        boolean enabled = isSdkEnabled();
+        if (!enabled) {
             logger.info("Global switch is off, ignore all operations");
         }
-        return sdkGlobalSwitch;
+        return enabled;
     }
 
     public static Boolean isGlobalConfigFetched() {
@@ -646,8 +742,25 @@ public class TikTokBusinessSdk {
         return testEventCode;
     }
 
+    /**
+     * Turns the sdk on or off from the app, typically when the user grants or withdraws consent.
+     * <p>
+     * The switch is app-controlled: it is never overwritten by the remote configuration, which is
+     * stored separately (see {@link #getRemoteSdkSwitch()}), so it survives a config refetch and
+     * an app foreground. While it is off the sdk ignores every track and flush request and makes
+     * no network request at all.
+     * <p>
+     * If {@link TTConfig#discardEventsWhileDisabled()} was set, turning it off also purges the
+     * events already queued in memory and persisted on the disk; otherwise those events are kept
+     * and would be sent once the sdk is enabled again, call {@link #clearPersistedEvents()} to
+     * purge them explicitly.
+     */
     public static void setSdkGlobalSwitch(Boolean sdkGlobalSwitch) {
+        boolean wasEnabled = isSdkEnabled();
         TikTokBusinessSdk.sdkGlobalSwitch = sdkGlobalSwitch;
+        if (wasEnabled && !isSdkEnabled() && isDiscardEventsWhileDisabled()) {
+            clearPersistedEvents();
+        }
     }
 
     public static String getApiAvailableVersion() {
@@ -788,6 +901,8 @@ public class TikTokBusinessSdk {
         private int autoIapTrack = 0;
         /* to enable auto EDP event tracking */
         private boolean autoEDPEvent = true;
+        /* to drop the events created while the sdk is disabled instead of storing them */
+        private boolean discardEventsWhileDisabled = false;
 
         /* Access-Token for api calls */
         private String accessToken;
@@ -921,6 +1036,22 @@ public class TikTokBusinessSdk {
 
         public TTConfig disableAutoEnhancedDataPostbackEvent() {
             autoEDPEvent = false;
+            return this;
+        }
+
+        /**
+         * to drop the events created while the sdk is disabled, off by default.
+         * <p>
+         * By default, the events tracked while the sdk is disabled are still queued in memory and
+         * on the disk and are sent once the sdk is enabled again. With this option every event,
+         * app event, monitor metric or enhanced data postback alike, is dropped as soon as it is
+         * created, and turning the app-controlled switch off through
+         * {@link TikTokBusinessSdk#setSdkGlobalSwitch(Boolean)} also purges what was already
+         * stored. Use it when nothing collected before the user's consent, or after its
+         * withdrawal, may be sent later.
+         */
+        public TTConfig discardEventsWhileDisabled() {
+            this.discardEventsWhileDisabled = true;
             return this;
         }
 

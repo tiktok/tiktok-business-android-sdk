@@ -59,6 +59,9 @@ public class TTCrashHandler {
     }
 
     public static void retryLater(JSONObject monitor) {
+        if (TikTokBusinessSdk.shouldDiscardEvents()) {
+            return;
+        }
         try {
             if (crashReport != null) {
                 crashReport.addReport(monitor.toString(), System.currentTimeMillis(), 0);
@@ -103,6 +106,11 @@ public class TTCrashHandler {
 
     private static TTCrashReport reportMonitor(@NonNull TTCrashReport cr) {
         if (cr.reports == null || cr.reports.isEmpty()) return cr;
+        if (!TikTokBusinessSdk.isSdkEnabled()) {
+            // nothing may leave the device while the sdk is disabled, keep the reports for later
+            // unless the app asked for them to be discarded
+            return TikTokBusinessSdk.shouldDiscardEvents() ? new TTCrashReport() : cr;
+        }
 
         TTCrashReport failedReport = new TTCrashReport();
         try {
@@ -170,6 +178,9 @@ public class TTCrashHandler {
     }
 
     private static void persistException(Throwable ex, int type) {
+        if (TikTokBusinessSdk.shouldDiscardEvents()) {
+            return;
+        }
         JSONObject stat = null;
         try {
             stat = TTRequestBuilder.getHealthMonitorBase();
@@ -189,6 +200,22 @@ public class TTCrashHandler {
 
                 TTRequest.reportMonitorEvent(req);
             }
+        }
+    }
+
+    /**
+     * drops the pending monitor reports, in memory and on the disk
+     */
+    public static void clearAll(Context context) {
+        try {
+            crashReport = new TTCrashReport();
+            if (context != null) {
+                File f = new File(context.getFilesDir(), CRASH_REPORT_FILE);
+                if (f.exists()) {
+                    f.delete();
+                }
+            }
+        } catch (Throwable ignore) {
         }
     }
 

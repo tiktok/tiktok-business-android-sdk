@@ -16,7 +16,7 @@ class DebugModeHelper {
     }
 
     public static void tryRequestConfig() {
-        if (isSuccess()) {
+        if (isSuccess() || !TikTokBusinessSdk.isSdkEnabled()) {
             return;
         }
 

@@ -126,7 +126,25 @@ public class HttpRequestUtil {
         return false;
     }
 
+    /**
+     * Nothing may leave the device while the app turned the sdk off, whatever the caller is.
+     * The remote kill switch is deliberately not part of this check, so that the global config
+     * can still be fetched and lift it.
+     */
+    private static boolean isNetworkAllowed() {
+        return Boolean.TRUE.equals(TikTokBusinessSdk.getSdkGlobalSwitch());
+    }
+
+    private static HttpResponse blockedResponse(String url) {
+        HttpResponse response = new HttpResponse();
+        response.url = url;
+        return response;
+    }
+
     public static HttpResponse doGet(String url, Map<String, String> headerParamMap, HttpRequestOptions options) {
+        if (!isNetworkAllowed()) {
+            return blockedResponse(url);
+        }
         long initTimeMS = SystemClock.elapsedRealtime();
 
         HttpResponse response = new HttpResponse();
@@ -198,6 +216,9 @@ public class HttpRequestUtil {
     }
 
     public static HttpResponse doPost(String url, Map<String, String> headerParamMap, String jsonStr, HttpRequestOptions options, boolean needSignature) {
+        if (!isNetworkAllowed()) {
+            return blockedResponse(url);
+        }
         long initTimeMS = SystemClock.elapsedRealtime();
 
         HttpResponse response = new HttpResponse();

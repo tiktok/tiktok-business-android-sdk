@@ -25,7 +25,9 @@ import java.util.LinkedList;
 import java.util.List;
 
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.anyList;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doCallRealMethod;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
@@ -146,7 +148,7 @@ public class TTAppEventLoggerTest extends BaseTest {
         appEventLogger.flush(TTAppEventLogger.FlushReason.FORCE_FLUSH);
         ArgumentCaptor<List<TTAppEvent>> captor = ArgumentCaptor.forClass(List.class);
         PowerMockito.verifyStatic(TTRequest.class, VerificationModeFactory.times(1));
-        TTRequest.reportAppEvent(any(), captor.capture());
+        TTRequest.reportAppEvent(any(), captor.capture(), eq(false));
         List<TTAppEvent> values = captor.getValue();
         assertEquals(3, values.size());
         assertEquals(fromDisk1, values.get(0));
@@ -167,7 +169,7 @@ public class TTAppEventLoggerTest extends BaseTest {
         failed.add(new TTAppEvent(TTAppEvent.TTAppEventType.track,"InternalTest", "{}", null, null));
 
         // when failed to flush, persist to disk
-        when(TTRequest.reportAppEvent(any(), any())).thenReturn(failed);
+        when(TTRequest.reportAppEvent(any(), any(), anyBoolean())).thenReturn(failed);
 
         appEventLogger.flush(TTAppEventLogger.FlushReason.FORCE_FLUSH);
 
