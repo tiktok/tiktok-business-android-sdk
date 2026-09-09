@@ -49,7 +49,7 @@ public class TTActivityLifecycleCallbacks implements Application.ActivityLifecyc
     }
 
     private void registerEDPListener(WeakReference<Activity> activity, int index, boolean isBackground) {
-        if (!EDPConfig.enable_sdk) {
+        if (!EDPConfig.enable_sdk || !TikTokBusinessSdk.isSdkEnabled()) {
             return;
         }
         try {
@@ -125,7 +125,7 @@ public class TTActivityLifecycleCallbacks implements Application.ActivityLifecyc
 
         TTInAppPurchaseWrapper.tryReportIapEvent(activity);
 
-        if (EDPConfig.enable_sdk && EDPConfig.enable_app_launch_track && Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP_MR1 && mIsBackground) {
+        if (EDPConfig.enable_sdk && TikTokBusinessSdk.isSdkEnabled() && EDPConfig.enable_app_launch_track && Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP_MR1 && mIsBackground) {
             try {
                 final Uri refer = activity.getReferrer();
                 if (refer != null) {

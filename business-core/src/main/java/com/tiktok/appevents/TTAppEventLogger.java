@@ -11,6 +11,8 @@ import static com.tiktok.appevents.edp.EDPConfig.ConfigConst.EDP_NATIVE_SDK_CONF
 import static com.tiktok.appevents.edp.TTEDPEventTrack.trackFirstAppLaunch;
 import static com.tiktok.util.TTConst.TTSDK_EXCEPTION_SDK_CATCH;
 
+import android.app.Application;
+import android.content.Context;
 import android.os.Handler;
 import android.os.Looper;
 import android.text.TextUtils;
@@ -47,6 +49,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 public class TTAppEventLogger {
     static final String SKIP_FLUSHING_BECAUSE_GLOBAL_SWITCH_IS_TURNED_OFF = "Skip flushing because global switch is turned off";
     static final String SKIP_FLUSHING_BECAUSE_GLOBAL_CONFIG_IS_NOT_FETCHED = "Skip flushing because global config is not fetched";
+    static final String SKIP_CONFIG_BECAUSE_APP_SWITCH_IS_TURNED_OFF = "Skip fetching global config because the app turned the sdk off";
     static final String TAG = "TTAppEventLogger";
 
     // every TIME_BUFFER seconds, a flush task will be pushed to the execution queue
@@ -89,6 +92,10 @@ public class TTAppEventLogger {
     static boolean metricsEnabled = true;
     private final static TTLifecycleListener mLifecycleListener = new TTLifecycleListener();
     final Handler uiThreadHandler = new Handler(Looper.getMainLooper());
+    // the observer registered on the process lifecycle, kept so that destroy() can remove it
+    TTActivityLifecycleCallbacksListener activityLifecycleCallbacks;
+    // once destroyed, no lifecycle callback may restart scheduling or refetch the config
+    volatile boolean destroyed = false;
     private final Runnable heartRunnable = new Runnable() {
         @Override
         public void run() {
@@ -134,8 +141,12 @@ public class TTAppEventLogger {
             @Override
             public void run() {
                 try {
-                    TTActivityLifecycleCallbacksListener activityLifecycleCallbacks = new TTActivityLifecycleCallbacksListener(TTAppEventLogger.this);
-                    TTAppEventLogger.this.lifecycle.addObserver(activityLifecycleCallbacks);
+                    if (destroyed) {
+                        return;
+                    }
+                    TTActivityLifecycleCallbacksListener listener = new TTActivityLifecycleCallbacksListener(TTAppEventLogger.this);
+                    TTAppEventLogger.this.activityLifecycleCallbacks = listener;
+                    TTAppEventLogger.this.lifecycle.addObserver(listener);
                     TikTokBusinessSdk.getApplicationContext().registerActivityLifecycleCallbacks(mLifecycleListener);
                 } catch (Throwable ignore) {
                 }
@@ -215,6 +226,9 @@ public class TTAppEventLogger {
     }
 
     public void startHeart() {
+        if (destroyed) {
+            return;
+        }
         try {
             TTHandlerUtil.getInstance().removeCallbacks(heartRunnable);
             TTHandlerUtil.getInstance().postDelayed(heartRunnable, 60000);
@@ -227,13 +241,13 @@ public class TTAppEventLogger {
     }
 
     void startScheduler() {
-        if (TIME_BUFFER != 0) {
+        if (!destroyed && TIME_BUFFER != 0) {
             doStartScheduler(TIME_BUFFER, false);
         }
     }
 
     void restartScheduler() {
-        if (TIME_BUFFER != 0) {
+        if (!destroyed && TIME_BUFFER != 0) {
             doStartScheduler(TIME_BUFFER, true);
         }
     }
@@ -258,7 +272,7 @@ public class TTAppEventLogger {
                 }, 0, 1, TimeUnit.SECONDS);
             }
         } catch (Throwable e) {
-            TikTokBusinessSdk.setSdkGlobalSwitch(false);
+            TikTokBusinessSdk.setRemoteSdkSwitch(false);
         }
     }
 
@@ -481,10 +495,71 @@ public class TTAppEventLogger {
         addToQ(TTCrashHandler::initCrashReporter);
     }
 
+    /**
+     * Stops this logger for good, see {@link TikTokBusinessSdk#destroy()}. The next
+     * initializeSdk call builds a new logger which registers its callbacks again.
+     */
     public void destroy() {
+        destroyed = true;
+        unregisterLifecycleCallbacks();
+        closeHeart();
+        stopScheduler();
         TTAppEventsQueue.clearAll();
         TTEdpAppEventsQueue.clearAll();
-        stopScheduler();
+    }
+
+    void unregisterLifecycleCallbacks() {
+        try {
+            Application application = TikTokBusinessSdk.getApplicationContext();
+            if (application != null) {
+                application.unregisterActivityLifecycleCallbacks(mLifecycleListener);
+            }
+        } catch (Throwable ignore) {
+        }
+
+        final TTActivityLifecycleCallbacksListener listener = activityLifecycleCallbacks;
+        activityLifecycleCallbacks = null;
+        if (listener == null) {
+            return;
+        }
+        final Runnable removeObserver = () -> {
+            try {
+                lifecycle.removeObserver(listener);
+            } catch (Throwable ignore) {
+            }
+        };
+        // the process lifecycle only accepts observer changes on the main thread
+        try {
+            if (Looper.myLooper() == Looper.getMainLooper()) {
+                removeObserver.run();
+            } else {
+                uiThreadHandler.post(removeObserver);
+            }
+        } catch (Throwable ignore) {
+            removeObserver.run();
+        }
+    }
+
+    /**
+     * Purges every event the sdk stored, see {@link TikTokBusinessSdk#clearPersistedEvents()}.
+     */
+    public static void purgeAllEvents(final Context context) {
+        try {
+            eventLoop.execute(() -> {
+                try {
+                    purgeAllEventsImmediately(context);
+                } catch (Throwable ignore) {
+                }
+            });
+        } catch (Throwable ignore) {
+        }
+    }
+
+    static void purgeAllEventsImmediately(Context context) {
+        TTAppEventsQueue.clearAll();
+        TTEdpAppEventsQueue.clearAll();
+        TTAppEventStorage.clearAll(context);
+        TTCrashHandler.clearAll(context);
     }
 
     /**
@@ -500,6 +575,9 @@ public class TTAppEventLogger {
     }
 
     public void addToQ(Runnable task) {
+        if (destroyed) {
+            return;
+        }
         // http://www.javabyexamples.com/handling-exceptions-from-executorservice-tasks
         try {
             eventLoop.execute(task);
@@ -519,6 +597,9 @@ public class TTAppEventLogger {
 
     // Do not remove, for the ease of local test
     private void addToLater(Runnable task, int seconds) {
+        if (destroyed) {
+            return;
+        }
         // http://www.javabyexamples.com/handling-exceptions-from-executorservice-tasks
         try {
             eventLoop.schedule(task, seconds, TimeUnit.SECONDS);
@@ -548,6 +629,15 @@ public class TTAppEventLogger {
         addToLater(() -> {
             boolean enableSDK = false;
             try {
+                if (destroyed) {
+                    return;
+                }
+                // the app-controlled switch is checked here rather than the effective one, so
+                // that a config fetch can still lift the remote kill switch
+                if (!Boolean.TRUE.equals(TikTokBusinessSdk.getSdkGlobalSwitch())) {
+                    logger.info(SKIP_CONFIG_BECAUSE_APP_SWITCH_IS_TURNED_OFF);
+                    return;
+                }
                 logger.info("Fetching global config....");
 
                 JSONObject requestResult = TTRequest.getBusinessSDKConfig();
@@ -570,7 +660,7 @@ public class TTAppEventLogger {
 
                 NetworkTimeout.updateConfig(businessSdkConfig);
 
-                TikTokBusinessSdk.setSdkGlobalSwitch(enableSDK);
+                TikTokBusinessSdk.setRemoteSdkSwitch(enableSDK);
                 logger.debug("enable_sdk=" + enableSDK);
                 // if sdk is shutdown, stop all the timers
                 if (!enableSDK) {
@@ -592,7 +682,7 @@ public class TTAppEventLogger {
             } catch (Throwable e) {
                 logger.error(e, "Errors occurred during initGlobalConfig");
             } finally {
-                if (TikTokBusinessSdk.isSystemActivated() && !TikTokBusinessSdk.isActivatedLogicRun) {
+                if (!destroyed && TikTokBusinessSdk.isSystemActivated() && !TikTokBusinessSdk.isActivatedLogicRun) {
                     TikTokBusinessSdk.isActivatedLogicRun = true;
                     activateSdk();
                 }
@@ -619,6 +709,7 @@ public class TTAppEventLogger {
                               @Nullable JSONObject meta,
                               @Nullable JSONObject extra) {
         if (!metricsEnabled) return;
+        if (!TikTokBusinessSdk.isSdkEnabled()) return;
         addToQ(() -> {
             if (!metricsEnabled) return;
             JSONObject stat;

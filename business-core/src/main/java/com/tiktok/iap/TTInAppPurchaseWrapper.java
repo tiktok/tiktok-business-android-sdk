@@ -8,6 +8,7 @@ package com.tiktok.iap;
 
 import android.app.Activity;
 
+import com.tiktok.TikTokBusinessSdk;
 import com.tiktok.iap.billing.client.IBillingProxy;
 import com.tiktok.iap.billing.client.TTBillingFactory;
 import com.tiktok.util.JSON;
@@ -45,6 +46,9 @@ public class TTInAppPurchaseWrapper {
     }
 
     public static void registerIapTrack() {
+        if (!TikTokBusinessSdk.isSdkEnabled()) {
+            return;
+        }
         try {
             if (autoTrackPaymentEnable) {
                 sExecutor.submit(new TTSafeRunnable() {
@@ -62,6 +66,9 @@ public class TTInAppPurchaseWrapper {
     }
 
     public static void tryReportIapEvent(Activity activity) {
+        if (!TikTokBusinessSdk.isSdkEnabled()) {
+            return;
+        }
         try {
             if (activity == null) {
                 return;

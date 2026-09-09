@@ -185,10 +185,13 @@ class TTAppEventStorage {
     }
 
     public synchronized static void clearAll() {
+        clearAll(TikTokBusinessSdk.getApplicationContext());
+    }
+
+    public synchronized static void clearAll(Context context) {
         TTUtil.checkThread(TAG);
 
         try {
-            Context context = TikTokBusinessSdk.getApplicationContext();
             if (context != null) {
                 File f = new File(context.getFilesDir(), EVENT_STORAGE_FILE);
                 deleteFile(f);
