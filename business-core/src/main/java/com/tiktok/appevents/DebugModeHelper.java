@@ -22,10 +22,11 @@ class DebugModeHelper {
 
         try {
             JSONObject result = TTRequest.getDebugModeConfig();
+            JSONObject debugModeConfig = getConfigForDebugMode(result);
 
-            sIsSuccess = result != null && result.has("enable_debug_mode");
+            sIsSuccess = debugModeConfig != null && debugModeConfig.has("enable_debug_mode");
 
-            boolean enableDebugMode = JSON.getBoolean(result, "enable_debug_mode", false);
+            boolean enableDebugMode = JSON.getBoolean(debugModeConfig, "enable_debug_mode", false);
 
             if (enableDebugMode) {
                 TikTokBusinessSdk.enableDebugMode();
@@ -36,6 +37,18 @@ class DebugModeHelper {
             enableScreenshot.set(JSON.getBoolean(result, "enable_screenshot", false));
         } catch (Throwable ignore) {
         }
+    }
+
+    static JSONObject getConfigForDebugMode(JSONObject response) {
+        if (response == null) {
+            return null;
+        }
+
+        JSONObject businessSdkConfig = response.optJSONObject("business_sdk_config");
+        if (businessSdkConfig != null && businessSdkConfig.has("enable_debug_mode")) {
+            return businessSdkConfig;
+        }
+        return response;
     }
 
     public static boolean enableScreenshot() {
